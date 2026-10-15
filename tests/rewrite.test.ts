@@ -96,4 +96,20 @@ describe("canUseRewrite", () => {
       ),
     ).toBe(false);
   });
+
+  it("allows a rewrite to retain a missing-skill claim already in the original", () => {
+    const original =
+      "Implemented JWT authentication with HTTP-only cookies and MongoDB/Mongoose schema modeling for secure data management.";
+    const rewritten =
+      "Implemented secure JWT authentication using HTTP-only cookies and MongoDB schema modeling for data management.";
+
+    expect(
+      canUseRewrite(
+        { original, rewritten, reason: "Improves clarity" },
+        ["JWT", "MongoDB", "Mongoose"],
+        ["authentication"],
+        ["JWT", "MongoDB", "Mongoose"],
+      ),
+    ).toBe(true);
+  });
 });

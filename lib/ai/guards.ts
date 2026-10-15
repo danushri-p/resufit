@@ -91,7 +91,12 @@ export function canUseRewrite(
       { title: "", detail: rewritten },
       original,
     ) ||
-    mentionsMissingSkill(rewritten, missingSkills)
+    mentionsMissingSkill(
+      rewritten,
+      missingSkills.filter(
+        (skill) => !mentionsMissingSkill(original, [skill]),
+      ),
+    )
   ) {
     return false;
   }
