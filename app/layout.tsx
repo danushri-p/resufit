@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ResuFit | Resume Analyzer",
-  description: "See how your resume fits the role you want.",
+  title: {
+    default: "ResuFit – AI resume analyzer",
+    template: "%s | ResuFit",
+  },
+  description: "Compare your resume with a job, get an honest match score, and improve your bullets.",
+  openGraph: {
+    title: "ResuFit – AI resume analyzer",
+    description: "Compare your resume with a job, get an honest match score, and improve your bullets.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

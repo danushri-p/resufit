@@ -96,7 +96,10 @@ export function runAtsChecks({
 
   const jobTitle = job.jobTitle ? normalizeSkill(job.jobTitle) : "";
   const seenKeywords = new Set<string>();
-  const keywords = [...job.mustHaveSkills, ...job.keywords].filter((keyword) => {
+  const keywords = [
+    ...job.mustHaveSkills,
+    ...job.niceToHaveSkills,
+  ].filter((keyword) => {
     const normalized = normalizeSkill(keyword);
     if (!normalized || normalized === jobTitle || seenKeywords.has(normalized)) {
       return false;

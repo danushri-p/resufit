@@ -1,58 +1,98 @@
 # ResuFit
 
-ResuFit is a resume analyzer built with Next.js, TypeScript, and Tailwind CSS. Resume and job-description extraction runs locally through Ollama; no AI API key is required.
+ResuFit compares a resume with a job description and gives an honest match score, ATS checks, suggestions, and bullet rewrites.
 
-## Run locally
+[Live demo](https://resufit-one.vercel.app) · [![CI](https://github.com/danushri-p/resufit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/danushri-p/resufit/actions/workflows/ci.yml)
 
-1. Install Ollama from [ollama.com](https://ollama.com).
-2. In a terminal, download and start the model:
+## Screenshots
 
-   ```bash
-   ollama run llama3.2
-   ```
+Add screenshots at:
 
-   Keep Ollama running while using ResuFit.
-3. In another terminal, start the web app:
-
-   ```bash
-   npm install
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000) and choose **Try it**.
-
-The app uses `http://127.0.0.1:11434` and the `llama3.2` model by default. Set `OLLAMA_BASE_URL` or `OLLAMA_MODEL` in `.env.local` only if you need different values; no API key is needed.
-
-## Day 6: Deploy
-
-For local use, Ollama works unchanged with the defaults above. To use Gemini locally, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`; `GEMINI_MODEL` defaults to `gemini-2.5-flash`. Set `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini` if you want the footer to show Gemini.
-
-To deploy on Vercel:
-
-1. Import the GitHub repository into Vercel.
-2. Add `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in the project's environment variables. Create the key at [Google AI Studio](https://aistudio.google.com/apikey). Set `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini` so the public footer matches the provider.
-3. Deploy the project.
-
-The free Gemini tier has rate limits. Analysis history is stored per browser and is not shared across browsers or devices.
-
-Public AI endpoints limit resume text to 20,000 characters, job descriptions to 10,000 characters, and each IP to 10 AI requests per minute. The in-memory limit is a basic safeguard and resets across serverless instances.
+- `docs/screenshots/analyze.png`
+- `docs/screenshots/results.png`
+- `docs/screenshots/history.png`
 
 ## Features
 
-- Upload a PDF or DOCX resume up to 5 MB on `/analyze`.
-- Preview extracted resume text and word count.
-- Paste a job description of at least 50 characters.
-- Extract structured resume and job details locally; the Analyze button displays skills and experience when Ollama is available.
+- Upload and preview PDF or DOCX resumes (up to 5 MB), or try fictional sample data.
+- Compare resume skills and experience against a job with a deterministic match score.
+- Review tailored suggestions and ATS checks.
+- Rewrite project bullets with checks against unsupported facts and technologies.
+- Download a Markdown report.
+- Keep up to ten recent analyses in browser-local history.
 
-The `POST /api/resume` endpoint extracts document text. The `POST /api/extract` endpoint returns validated resume and job requirement data.
+## Privacy
 
-## Day 3: Match analysis
+Your resume is sent to the AI provider to generate the analysis and is not stored by ResuFit. On the live site the provider is Google Gemini; on the free tier Google may use submitted content to improve its products, so avoid uploading information you don't want to share. Saved history stays in this browser.
 
-After extraction, ResuFit compares resume skills (including project tech stacks) with the job's must-have and nice-to-have skills. The match score weights must-have coverage at 70%, nice-to-have coverage at 20%, and experience at 10%. Empty skill lists receive full coverage points. When years of experience are required, each listed experience entry counts as one year and projects count as zero; the score is rounded to a whole number. Ollama generates up to five resume improvement suggestions separately, so suggestion failures do not affect the score.
+## How it works
 
-## Day 5: ATS checks and history
+`upload → extract → match → suggest → rewrite`
 
-The deterministic ATS check reports email/phone presence, Skills/Education/Experience-or-Projects headings, a 300–900 word target, job keyword coverage (70% pass, 40% warning), strong action verbs in bullets (70% pass, 40% warning), and whether bullets include real numbers. Its score averages each check as 100 for pass, 50 for warning, and 0 for fail. Analyses are saved only in this browser's local storage, with up to ten recent entries. Open the **History** page from the home or analysis header to review or delete saved analyses.
+Resume and job details are extracted by the selected AI provider and validated with Zod. Skill/experience scoring and ATS checks are deterministic; suggestions and rewrites use AI.
 
-## Day 4: Bullet rewriting and reports
+## Tech stack
 
-ResuFit can rewrite project bullets to better match a job while preserving their original facts and project technologies. Unsupported numbers, missing skills, and unverified technologies are rejected, leaving the original bullet unchanged. Download a Markdown report from the match analysis card to save the score, skills, suggestions, and any improved bullets. Run unit tests with `npm test`.
+Next.js, TypeScript, Tailwind CSS, Zod, Vitest, Ollama or Google Gemini, `pdf-parse`, and `mammoth`.
+
+## Honesty safeguards
+
+- **Number guard:** rejects rewrite metrics/numbers that are not supported by the original bullet.
+- **Missing-skill guard:** rejects rewrites and suggestions that claim a skill listed as missing, except when a rewrite retains a claim already present in its original bullet.
+- **Technology guard:** limits rewritten technologies to those already named in the bullet or project tech stack.
+- **Deterministic results:** match score and ATS checks are rule-based and do not use AI.
+
+## Run locally
+
+Install dependencies with `npm ci`. For local Ollama, install Ollama and run:
+
+```bash
+ollama run llama3.2
+npm run dev
+```
+
+For Gemini, create a key in [Google AI Studio](https://aistudio.google.com/apikey) and set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`. The default model is `gemini-2.5-flash`.
+
+Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` to `.env.local` to customize settings.
+
+### Environment variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `AI_PROVIDER` | `ollama` | Select `ollama` or `gemini`. |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Local Ollama server URL. |
+| `OLLAMA_MODEL` | `llama3.2` | Local Ollama model. |
+| `GEMINI_API_KEY` | *(empty)* | Required when using Gemini; keep secret. |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model. |
+| `NEXT_PUBLIC_AI_PROVIDER_LABEL` | `Ollama (local)` | Non-secret provider label shown in the footer. |
+
+## Tests
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+The test suite mocks AI network requests. CI runs these checks on Node.js 22.
+
+## Deploy to Vercel
+
+Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Never expose the API key with a `NEXT_PUBLIC_` prefix.
+
+## Limitations
+
+- The free Gemini tier has rate limits; the app also uses a basic in-memory per-IP request limit.
+- Small local models may be less accurate than hosted models.
+- Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
+- Analysis history is stored per browser and is not shared across browsers or devices.
+
+## Project timeline
+
+- **Day 1:** Set up the app and resume upload/preview flow.
+- **Day 2:** Extract structured resume and job details.
+- **Day 3:** Add match scoring and suggestions.
+- **Day 4:** Add guarded bullet rewrites and Markdown reports.
+- **Day 5:** Add ATS checks and browser-local history.
+- **Day 6:** Add Gemini, deployment configuration, and public-site safeguards.
+- **Day 7:** Polish sample flow, landing page, error states, metadata, and CI.

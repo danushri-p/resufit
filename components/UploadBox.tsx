@@ -20,6 +20,7 @@ export interface ResumeUploadResult {
 
 interface UploadBoxProps {
   onTextExtracted: (result: ResumeUploadResult) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 function isResumeUploadResult(value: unknown): value is ResumeUploadResult {
@@ -48,7 +49,10 @@ function getApiError(value: unknown): string | undefined {
   return undefined;
 }
 
-export function UploadBox({ onTextExtracted }: UploadBoxProps) {
+export function UploadBox({
+  onTextExtracted,
+  onUploadingChange,
+}: UploadBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>();
   const [isDragging, setIsDragging] = useState(false);
@@ -76,6 +80,7 @@ export function UploadBox({ onTextExtracted }: UploadBoxProps) {
 
     setFileName(file.name);
     setIsUploading(true);
+    onUploadingChange?.(true);
 
     try {
       const formData = new FormData();
@@ -106,6 +111,7 @@ export function UploadBox({ onTextExtracted }: UploadBoxProps) {
       );
     } finally {
       setIsUploading(false);
+      onUploadingChange?.(false);
       if (inputRef.current) {
         inputRef.current.value = "";
       }

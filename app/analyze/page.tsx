@@ -26,8 +26,10 @@ import { buildMarkdownReport } from "@/lib/report";
 import { saveHistoryEntry, updateHistoryEntry } from "@/lib/history";
 import { ProviderFooter } from "@/components/ProviderFooter";
 import { readApiResponse } from "@/lib/apiResponse";
+import { sampleJobDescription, sampleResumeText } from "@/lib/samples";
 
 const MIN_JOB_TEXT_LENGTH = 50;
+type RateLimitedAction = "analyze" | "rewrite";
 
 interface ExtractionResult {
   resume: Resume;
@@ -175,22 +177,93 @@ export default function AnalyzePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSample, setIsSample] = useState(false);
   const [error, setError] = useState<string>();
   const [matchError, setMatchError] = useState<string>();
   const [rewriteError, setRewriteError] = useState<string>();
   const [copiedBullet, setCopiedBullet] = useState<string>();
   const [uploadBoxKey, setUploadBoxKey] = useState(0);
+  const [rateLimitedAction, setRateLimitedAction] =
+    useState<RateLimitedAction>();
+  const [retryCountdown, setRetryCountdown] = useState(0);
   const copyTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const analysisRequestId = useRef(0);
   const rewriteRequestId = useRef(0);
   const historyId = useRef<string | undefined>(undefined);
   const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const isBusy = isUploading || isAnalyzing || isMatching || isRewriting;
+  const isRetryCooldownActive = retryCountdown > 0;
 
   const canAnalyze =
     Boolean(resume?.text.trim()) &&
     jobText.trim().length >= MIN_JOB_TEXT_LENGTH &&
-    !isAnalyzing &&
-    !isMatching;
+    retryCountdown === 0 &&
+    !isBusy;
+
+  useEffect(() => {
+    if (!rateLimitedAction || !isRetryCooldownActive) return;
+
+    const interval = window.setInterval(
+      () => setRetryCountdown((remaining) => Math.max(0, remaining - 1)),
+      1000,
+    );
+    return () => window.clearInterval(interval);
+  }, [rateLimitedAction, isRetryCooldownActive]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (new URLSearchParams(window.location.search).get("sample") === "1") {
+        setResume({
+          fileName: "sample-resume.txt",
+          text: sampleResumeText,
+          wordCount: sampleResumeText.trim().split(/\s+/).length,
+        });
+        setJobText(sampleJobDescription);
+        setIsSample(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  function startRateLimitCooldown(action: RateLimitedAction) {
+    setRateLimitedAction(action);
+    setRetryCountdown(60);
+  }
+
+  function clearRateLimitCooldown() {
+    setRateLimitedAction(undefined);
+    setRetryCountdown(0);
+  }
+
+  function rateLimitRetryButton(action: RateLimitedAction) {
+    if (rateLimitedAction !== action) return null;
+
+    return (
+      <div className="space-y-1">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isBusy || retryCountdown > 0}
+          onClick={() => {
+            clearRateLimitCooldown();
+            if (action === "analyze") {
+              void handleAnalyze();
+            } else {
+              void handleRewriteBullets();
+            }
+          }}
+        >
+          Try again
+        </Button>
+        {retryCountdown > 0 && (
+          <p className="text-sm text-stone-700" role="status">
+            Try again in {retryCountdown} seconds.
+          </p>
+        )}
+      </div>
+    );
+  }
 
   function handleResumeExtracted(upload: ResumeUploadResult) {
     analysisRequestId.current += 1;
@@ -203,6 +276,7 @@ export default function AnalyzePage() {
     setMatchError(undefined);
     setRewriteError(undefined);
     setCopiedBullet(undefined);
+    setIsSample(false);
     setIsAnalyzing(false);
     setIsMatching(false);
     setIsRewriting(false);
@@ -220,6 +294,8 @@ export default function AnalyzePage() {
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
+    setIsSample(false);
+    clearRateLimitCooldown();
     setIsAnalyzing(false);
     setIsMatching(false);
     setIsRewriting(false);
@@ -228,9 +304,21 @@ export default function AnalyzePage() {
     historyId.current = undefined;
   }
 
+  function loadSample() {
+    if (isBusy) return;
+    handleResumeExtracted({
+      fileName: "sample-resume.txt",
+      text: sampleResumeText,
+      wordCount: sampleResumeText.trim().split(/\s+/).length,
+    });
+    setJobText(sampleJobDescription);
+    setIsSample(true);
+  }
+
   async function handleAnalyze() {
     if (!canAnalyze || !resume) return;
 
+    clearRateLimitCooldown();
     const requestId = ++analysisRequestId.current;
     rewriteRequestId.current += 1;
     setIsAnalyzing(true);
@@ -255,6 +343,9 @@ export default function AnalyzePage() {
       if (requestId !== analysisRequestId.current) return;
 
       if (!response.ok) {
+        if (response.status === 429) {
+          startRateLimitCooldown("analyze");
+        }
         throw new Error(
           getApiError(payload) ?? "Could not analyze the resume and job description.",
         );
@@ -282,6 +373,9 @@ export default function AnalyzePage() {
         if (requestId !== analysisRequestId.current) return;
 
         if (!matchResponse.ok) {
+          if (matchResponse.status === 429) {
+            startRateLimitCooldown("analyze");
+          }
           throw new Error(
             getApiError(matchPayload) ?? "Could not analyze the resume match.",
           );
@@ -336,8 +430,9 @@ export default function AnalyzePage() {
   }
 
   async function handleRewriteBullets() {
-    if (!result || !match || !resume || isRewriting) return;
+    if (!result || !match || !resume || isRewriting || retryCountdown > 0) return;
 
+    clearRateLimitCooldown();
     const requestId = ++rewriteRequestId.current;
     setIsRewriting(true);
     setRewrites(undefined);
@@ -365,6 +460,9 @@ export default function AnalyzePage() {
       const payload = await readApiResponse(response);
 
       if (!response.ok) {
+        if (response.status === 429) {
+          startRateLimitCooldown("rewrite");
+        }
         throw new Error(
           getApiError(payload) ?? "Could not improve the resume bullets.",
         );
@@ -479,14 +577,36 @@ export default function AnalyzePage() {
           })}
         </nav>
 
-        <UploadBox key={uploadBoxKey} onTextExtracted={handleResumeExtracted} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="min-w-0 flex-1">
+            <UploadBox
+              key={uploadBoxKey}
+              onTextExtracted={handleResumeExtracted}
+              onUploadingChange={setIsUploading}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            disabled={isBusy}
+            onClick={loadSample}
+          >
+            Try a sample
+          </Button>
+        </div>
+        {isSample && (
+          <p className="-mt-5 text-sm font-medium text-indigo-900" role="status">
+            Sample data: fictional resume and job description.
+          </p>
+        )}
 
         <Card>
           <CardHeader>
             <CardTitle>Extracted resume text</CardTitle>
             <CardDescription>
               {resume
-                ? `${resume.fileName} · ${resume.wordCount} words`
+                ? `${resume.fileName} · ${resume.wordCount} words${isSample ? " · fictional sample" : ""}`
                 : "Your resume text will appear here after upload."}
             </CardDescription>
           </CardHeader>
@@ -550,9 +670,12 @@ export default function AnalyzePage() {
               </p>
             )}
             {error && (
-              <p className="text-sm text-red-600" role="alert">
-                {error}
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-red-700" role="alert">
+                  {error}
+                </p>
+                {rateLimitRetryButton("analyze")}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -576,6 +699,7 @@ export default function AnalyzePage() {
               job={result.job}
               match={match}
               rewrites={rewrites}
+              isMatching={isUploading || isAnalyzing || isMatching}
               isRewriting={isRewriting}
               matchError={matchError}
               rewriteError={rewriteError}
@@ -704,7 +828,7 @@ export default function AnalyzePage() {
                       <div className="flex flex-wrap gap-3">
                         <Button
                           type="button"
-                          disabled={isRewriting}
+                          disabled={isBusy || retryCountdown > 0}
                           onClick={() => void handleRewriteBullets()}
                         >
                           {isRewriting ? "Improving bullets…" : "Improve bullets"}
@@ -723,16 +847,22 @@ export default function AnalyzePage() {
                         </p>
                       )}
                       {rewriteError && (
-                        <p className="text-sm text-red-600" role="alert">
-                          {rewriteError}
-                        </p>
+                        <div className="space-y-2">
+                          <p className="text-sm text-red-700" role="alert">
+                            {rewriteError}
+                          </p>
+                          {rateLimitRetryButton("rewrite")}
+                        </div>
                       )}
                     </>
                   )}
                   {matchError && (
-                    <p className="text-sm text-red-600" role="alert">
-                      {matchError}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-red-700" role="alert">
+                        {matchError}
+                      </p>
+                      {rateLimitRetryButton("analyze")}
+                    </div>
                   )}
                 </CardContent>
               </Card>

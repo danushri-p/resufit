@@ -69,27 +69,38 @@ describe("runAtsChecks", () => {
 
   it("checks keyword thresholds and normalizes skill aliases", () => {
     const resumeText = `${"word ".repeat(300)}${contact}${headings}\nReact.js Alpha Beta Gamma Delta Epsilon Zeta`;
-    expect(run(resumeText, {}, { keywords: ["React"] }).checks[3].status).toBe("pass");
+    expect(run(resumeText, {}, { mustHaveSkills: ["React"] }).checks[3].status).toBe("pass");
     expect(
-      run(resumeText, {}, { keywords: ["React", "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa"] }).checks[3].status,
+      run(resumeText, {}, { mustHaveSkills: ["React", "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa"] }).checks[3].status,
     ).toBe("warn");
     expect(
-      run(resumeText, {}, { keywords: ["React", "Alpha", "Missing 1", "Missing 2"] }).checks[3].status,
+      run(resumeText, {}, { mustHaveSkills: ["React", "Alpha", "Missing 1", "Missing 2"] }).checks[3].status,
     ).toBe("warn");
     expect(
-      run(resumeText, {}, { keywords: ["Missing 1", "Missing 2", "Missing 3"] }).checks[3].status,
+      run(resumeText, {}, { mustHaveSkills: ["Missing 1", "Missing 2", "Missing 3"] }).checks[3].status,
     ).toBe("fail");
   });
 
-  it("deduplicates keywords and excludes the job title from the missing list", () => {
+  it("uses only skill lists, deduplicates them and excludes the job title", () => {
     const output = run("Resume text", {}, {
       jobTitle: "Node.js",
       mustHaveSkills: ["Postgres"],
-      keywords: ["PostgreSQL", "Node.js"],
+      niceToHaveSkills: ["PostgreSQL", "Node.js", "Git"],
+      keywords: ["Bengaluru", "Hybrid", "Intern", "PostgreSQL"],
     });
 
     expect(output.checks[3].detail).toBe(
-      "Your resume is missing Postgres job keywords.",
+      "Your resume is missing Postgres, Git job keywords.",
+    );
+  });
+
+  it("does not use keywords when the skill lists are empty", () => {
+    const output = run("Resume text", {}, {
+      keywords: ["Bengaluru", "Hybrid", "Intern"],
+    });
+
+    expect(output.checks[3].detail).toBe(
+      "Your resume includes all listed job keywords.",
     );
   });
 
