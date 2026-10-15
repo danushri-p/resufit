@@ -18,8 +18,8 @@ describe("extractResume", () => {
       makeResume({
         experience: [
           {
-            role: "Engineer",
-            company: "Example Co",
+            role: "Frontend Developer",
+            company: "Acme Corp",
             startDate: null,
             endDate: null,
             bullets: ["Integrated Google Calendar with automated checks"],
@@ -37,7 +37,7 @@ describe("extractResume", () => {
     );
 
     const resume = await extractResume(
-      "Calendar project\n• Integrated Google Calendar with automated checks every 5 minutes",
+      "Frontend Developer, Acme Corp\nCalendar project\n• Integrated Google Calendar with automated checks every 5 minutes",
     );
 
     expect(resume.projects[0].bullets).toEqual([
@@ -46,5 +46,38 @@ describe("extractResume", () => {
     expect(resume.experience[0].bullets).toEqual([
       "Integrated Google Calendar with automated checks every 5 minutes",
     ]);
+  });
+
+  it("drops experience not named in the resume and keeps a real role or company", async () => {
+    vi.mocked(generateStructured).mockResolvedValue(
+      makeResume({
+        experience: [
+          {
+            role: "Full-stack Intern",
+            company: "Example Company",
+            startDate: null,
+            endDate: null,
+            bullets: ["Built a web application"],
+          },
+          {
+            role: "Frontend Developer",
+            company: "Acme Corp",
+            startDate: null,
+            endDate: null,
+            bullets: ["Built a web application"],
+          },
+        ],
+      }),
+    );
+
+    const resume = await extractResume(
+      "Looking for a full-stack internship. Frontend   Developer, Acme Corp",
+    );
+
+    expect(resume.experience).toHaveLength(1);
+    expect(resume.experience[0]).toMatchObject({
+      role: "Frontend Developer",
+      company: "Acme Corp",
+    });
   });
 });

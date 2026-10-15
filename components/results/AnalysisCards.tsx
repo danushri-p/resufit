@@ -124,7 +124,7 @@ export function AnalysisCards({
 
           {(onRewrite || onDownload) && (
             <div className="flex flex-col gap-3 sm:flex-row">
-              {onRewrite && <Button type="button" disabled={isRewriting} onClick={onRewrite}>{isRewriting ? "Improving bullets…" : "Improve bullets"}</Button>}
+              {onRewrite && <Button type="button" disabled={isRewriting || isMatching} onClick={onRewrite}>{isRewriting ? "Improving bullets…" : "Improve bullets"}</Button>}
               {onDownload && <Button type="button" variant="outline" onClick={onDownload}>Download report</Button>}
             </div>
           )}

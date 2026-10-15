@@ -20,6 +20,26 @@ function restoreBullet(bullet: string, resumeLines: string[]): string {
   return sourceLine?.replace(/^\s*[-•*]\s*/, "").trim() ?? bullet;
 }
 
+function resumeContainsExperienceLabel(
+  resumeText: string,
+  label: string | null,
+): boolean {
+  const normalizedLabel = label
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!normalizedLabel) return false;
+
+  const normalizedResume = ` ${resumeText
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ")} `;
+
+  return normalizedResume.includes(` ${normalizedLabel} `);
+}
+
 export function extractResume(resumeText: string): Promise<Resume> {
   const resumeLines = resumeText.split(/\r?\n/);
 
@@ -32,6 +52,9 @@ export function extractResume(resumeText: string): Promise<Resume> {
     skills: cleanSkillArray(resume.skills),
     experience: resume.experience.filter(
       ({ role, company }) => Boolean(role?.trim() || company?.trim()),
+    ).filter(({ role, company }) =>
+      resumeContainsExperienceLabel(resumeText, company) ||
+      resumeContainsExperienceLabel(resumeText, role),
     ).map((experience) => ({
       ...experience,
       bullets: experience.bullets.map((bullet) =>
