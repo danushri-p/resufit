@@ -16,6 +16,15 @@ describe("buildMarkdownReport", () => {
         { title: "Highlight React", detail: "Mention React in your summary." },
         { title: "Learn PostgreSQL", detail: "Build a small project." },
       ],
+      ats: {
+        score: 75,
+        checks: [{
+          id: "length",
+          label: "Resume length",
+          status: "pass",
+          detail: "Your resume has a suitable length.",
+        }],
+      },
     };
 
     const report = buildMarkdownReport({

@@ -86,6 +86,7 @@ export function canUseRewrite(
 
   if (
     rewritten === original ||
+    !containsOriginalNumbers(original, rewritten) ||
     containsUnsupportedNumbers(
       { title: "", detail: rewritten },
       original,
@@ -109,4 +110,18 @@ export function canUseRewrite(
   );
 
   return !mentionsMissingSkill(rewritten, disallowedTechnologies);
+}
+
+function containsOriginalNumbers(original: string, rewritten: string): boolean {
+  const numbersInOriginal =
+    original.match(/\d+(?:[.,]\d+)*(?:\+)?/g)?.map((number) =>
+      number.replace(/,/g, ""),
+    ) ?? [];
+  const numbersInRewrite = new Set(
+    rewritten.match(/\d+(?:[.,]\d+)*(?:\+)?/g)?.map((number) =>
+      number.replace(/,/g, ""),
+    ) ?? [],
+  );
+
+  return numbersInOriginal.every((number) => numbersInRewrite.has(number));
 }

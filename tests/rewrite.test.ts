@@ -79,4 +79,21 @@ describe("canUseRewrite", () => {
       ),
     ).toBe(false);
   });
+
+  it("rejects a rewrite that drops a number from the original bullet", () => {
+    expect(
+      canUseRewrite(
+        {
+          original:
+            "Integrated Google Calendar with automated checks every 5 minutes",
+          rewritten:
+            "Integrated Google Calendar with scheduled automated checks for real-time updates",
+          reason: "Improves clarity",
+        },
+        ["Google Calendar"],
+        [],
+        ["Google Calendar"],
+      ),
+    ).toBe(false);
+  });
 });

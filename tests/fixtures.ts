@@ -28,3 +28,8 @@ export function makeJob(
     ...overrides,
   };
 }
+
+export const emptyAts = {
+  score: 0,
+  checks: [],
+};

@@ -46,7 +46,9 @@ export async function POST(request: Request) {
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const extractedText = isPdf ? await parsePdf(buffer) : await parseDocx(buffer);
-    const text = extractedText.trim();
+    const text = extractedText
+      .replace(/^--\s*\d+\s+of\s+\d+\s*--$/gm, "")
+      .trim();
 
     if (!text) {
       return errorResponse(

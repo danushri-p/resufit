@@ -11,6 +11,12 @@ export default function Home() {
         height={48}
         priority
       />
+      <Link
+        href="/history"
+        className="absolute right-6 top-6 rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+      >
+        History
+      </Link>
       <div className="space-y-3">
         <h1 className="text-4xl font-semibold tracking-tight text-stone-900 sm:text-5xl">
           Make your next move count.

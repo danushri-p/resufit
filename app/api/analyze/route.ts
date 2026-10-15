@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/client";
 import { suggestResumeImprovements } from "@/lib/ai/suggest";
 import { createMatchResult } from "@/lib/matching/result";
+import { runAtsChecks } from "@/lib/ats";
 import {
   JobRequirementsSchema,
   ResumeSchema,
@@ -58,20 +59,25 @@ export async function POST(request: Request) {
   }
 
   if (typeof body !== "object" || body === null) {
-    return errorResponse("Request body must contain resume and job.", 400);
+    return errorResponse("Request body must contain resume, job, and resumeText.", 400);
   }
 
-  const { resume: rawResume, job: rawJob } = body as Record<string, unknown>;
+  const { resume: rawResume, job: rawJob, resumeText } = body as Record<string, unknown>;
   const parsedResume = ResumeSchema.safeParse(rawResume);
   const parsedJob = JobRequirementsSchema.safeParse(rawJob);
 
-  if (!parsedResume.success || !parsedJob.success) {
+  if (
+    !parsedResume.success ||
+    !parsedJob.success ||
+    typeof resumeText !== "string"
+  ) {
     return errorResponse("Resume or job requirements have an invalid format.", 400);
   }
 
   const resume: Resume = parsedResume.data;
   const job: JobRequirements = parsedJob.data;
-  const baseResult = createMatchResult(resume, job);
+  const ats = runAtsChecks({ resumeText, resume, job });
+  const baseResult = createMatchResult(resume, job, ats);
 
   try {
     const { suggestions } = await suggestResumeImprovements(

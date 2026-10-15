@@ -1,10 +1,11 @@
-import type { JobRequirements, MatchResult, Resume } from "@/lib/schemas";
+import type { AtsResult, JobRequirements, MatchResult, Resume } from "@/lib/schemas";
 import { matchSkills } from "@/lib/matching/skills";
 import { computeMatchScore, getMatchLabel } from "@/lib/matching/score";
 
 export function createMatchResult(
   resume: Resume,
   job: JobRequirements,
+  ats: AtsResult,
   suggestions: MatchResult["suggestions"] = [],
 ): MatchResult {
   const resumeSkills = [
@@ -23,5 +24,6 @@ export function createMatchResult(
     matchedNiceToHave: niceToHave.matched,
     missingNiceToHave: niceToHave.missing,
     suggestions,
+    ats,
   };
 }
