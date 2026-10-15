@@ -1,20 +1,32 @@
 # ResuFit
 
-ResuFit is an AI resume analyzer built with Next.js, TypeScript, and Tailwind CSS. Day 1 provides resume text extraction and a job-description input; analysis will be added later.
+ResuFit is a resume analyzer built with Next.js, TypeScript, and Tailwind CSS. Resume and job-description extraction runs locally through Ollama; no AI API key is required.
 
 ## Run locally
 
-```bash
-npm install
-npm run dev
-```
+1. Install Ollama from [ollama.com](https://ollama.com).
+2. In a terminal, download and start the model:
 
-Open [http://localhost:3000](http://localhost:3000), then choose **Try it** to open the analyzer.
+   ```bash
+   ollama run llama3.2
+   ```
 
-## Day 1 features
+   Keep Ollama running while using ResuFit.
+3. In another terminal, start the web app:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) and choose **Try it**.
+
+The app uses `http://127.0.0.1:11434` and the `llama3.2` model by default. Set `OLLAMA_BASE_URL` or `OLLAMA_MODEL` in `.env.local` only if you need different values; no API key is needed.
+
+## Features
 
 - Upload a PDF or DOCX resume up to 5 MB on `/analyze`.
-- Preview the extracted text and word count.
-- Paste a job description. The Analyze button is intentionally disabled for now.
+- Preview extracted resume text and word count.
+- Paste a job description of at least 50 characters.
+- Extract structured resume and job details locally; the Analyze button displays skills and experience when Ollama is available.
 
-The `POST /api/resume` endpoint accepts a `file` field in `FormData` and returns the filename, extracted text, and word count. It reports errors for unsupported files, oversized uploads, and files with no extractable text.
+The `POST /api/resume` endpoint extracts document text. The `POST /api/extract` endpoint returns validated resume and job requirement data.
