@@ -24,6 +24,7 @@ import {
 } from "@/lib/schemas";
 import { buildMarkdownReport } from "@/lib/report";
 import { saveHistoryEntry, updateHistoryEntry } from "@/lib/history";
+import { ProviderFooter } from "@/components/ProviderFooter";
 
 const MIN_JOB_TEXT_LENGTH = 50;
 
@@ -270,7 +271,11 @@ export default function AnalyzePage() {
         const matchResponse = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...parsedResult, resumeText: resume.text }),
+          body: JSON.stringify({
+            ...parsedResult,
+            resumeText: resume.text,
+            jobText: jobText.trim(),
+          }),
         });
         const matchPayload: unknown = await matchResponse.json();
         if (requestId !== analysisRequestId.current) return;
@@ -330,7 +335,7 @@ export default function AnalyzePage() {
   }
 
   async function handleRewriteBullets() {
-    if (!result || !match || isRewriting) return;
+    if (!result || !match || !resume || isRewriting) return;
 
     const requestId = ++rewriteRequestId.current;
     setIsRewriting(true);
@@ -352,6 +357,8 @@ export default function AnalyzePage() {
             ...match.missingMustHave,
             ...match.missingNiceToHave,
           ],
+          resumeText: resume.text,
+          jobText: jobText.trim(),
         }),
       });
       const payload: unknown = await response.json();
@@ -926,6 +933,7 @@ export default function AnalyzePage() {
             </Card>
           </section>
         )}
+        <ProviderFooter />
       </div>
     </main>
   );

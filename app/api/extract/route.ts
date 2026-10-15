@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import {
-  InvalidAIOutputError,
-  OllamaRequestError,
-  OllamaTimeoutError,
-  OllamaUnavailableError,
-  getOllamaModel,
-} from "@/lib/ai/client";
+import { getAIError } from "@/lib/ai/routeErrors";
 import { extractJD } from "@/lib/ai/extractJD";
 import { extractResume } from "@/lib/ai/extractResume";
+import {
+  consumeAIRequest,
+  getRequestIp,
+  getTextLimitError,
+} from "@/lib/ai/limits";
 
 const MIN_JOB_TEXT_LENGTH = 50;
+const RATE_LIMIT_MESSAGE =
+  "You've made too many AI requests. Please wait a minute and try again.";
 
 function errorResponse(error: string, status: number) {
   return NextResponse.json({ error }, { status });
@@ -44,6 +45,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const lengthError = getTextLimitError(resumeText, jobText);
+  if (lengthError) {
+    return errorResponse(lengthError, 400);
+  }
+
+  if (!consumeAIRequest(getRequestIp(request))) {
+    return errorResponse(RATE_LIMIT_MESSAGE, 429);
+  }
+
   try {
     const [resume, job] = await Promise.all([
       extractResume(resumeText),
@@ -52,41 +62,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ resume, job });
   } catch (error) {
-    if (error instanceof InvalidAIOutputError) {
-      return errorResponse(
-        "The AI returned data in an unexpected format. Please try again.",
-        502,
-      );
-    }
-
-    if (error instanceof OllamaUnavailableError) {
-      return errorResponse(
-        `Ollama is not running. Start Ollama and make sure the ${getOllamaModel()} model is installed.`,
-        503,
-      );
-    }
-
-    if (error instanceof OllamaTimeoutError) {
-      return errorResponse(
-        "Ollama took too long to respond. Try again, or use a shorter resume or job description.",
-        504,
-      );
-    }
-
-    if (error instanceof OllamaRequestError) {
-      console.error("Ollama extraction request failed:", {
-        status: error.status,
-      });
-      if (error.status === 404) {
-        return errorResponse(
-          `The ${getOllamaModel()} model is not installed. Run \`ollama pull ${getOllamaModel()}\`, then try again.`,
-          503,
-        );
-      }
-      return errorResponse(
-        "Ollama could not complete the extraction request. Check that the local Ollama service is running and try again.",
-        502,
-      );
+    const aiError = getAIError(error, "extraction");
+    if (aiError) {
+      return errorResponse(aiError.message, aiError.status);
     }
 
     console.error(
