@@ -60,9 +60,9 @@ function SkillChips({ skills }: { skills: string[] }) {
 
   return (
     <ul className="flex flex-wrap gap-2">
-      {skills.map((skill) => (
+      {skills.map((skill, index) => (
         <li
-          key={skill}
+          key={`${skill}-${index}`}
           className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-800"
         >
           {skill}
@@ -270,6 +270,59 @@ export default function AnalyzePage() {
                     </p>
                   )}
                 </div>
+                <div className="space-y-3">
+                  <h3 className="font-medium text-stone-900">Projects</h3>
+                  {result.resume.projects.length > 0 ? (
+                    <ul className="space-y-4">
+                      {result.resume.projects.map((project, index) => (
+                        <li
+                          key={`${project.name ?? "project"}-${index}`}
+                          className="space-y-2 border-l-2 border-indigo-200 pl-4"
+                        >
+                          <p className="font-medium text-stone-900">
+                            {project.name ?? "Project"}
+                          </p>
+                          {project.description && (
+                            <p className="text-sm text-stone-700">
+                              {project.description}
+                            </p>
+                          )}
+                          {project.techStack.length > 0 && (
+                            <SkillChips skills={project.techStack} />
+                          )}
+                          {project.bullets.length > 0 && (
+                            <ul className="list-disc space-y-1 pl-5 text-sm text-stone-700">
+                              {project.bullets.map((bullet, bulletIndex) => (
+                                <li key={`${bullet}-${bulletIndex}`}>{bullet}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-stone-500">
+                      No projects were found.
+                    </p>
+                  )}
+                </div>
+                {result.resume.education.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-stone-900">Education</h3>
+                    <ul className="space-y-2">
+                      {result.resume.education.map((education, index) => (
+                        <li
+                          key={`${education.institution ?? "education"}-${index}`}
+                          className="text-sm text-stone-700"
+                        >
+                          {[education.degree, education.institution, education.year]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

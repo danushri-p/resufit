@@ -1,4 +1,4 @@
-import { extractWithOllama } from "@/lib/ai/client";
+import { cleanSkillArray, extractWithOllama } from "@/lib/ai/client";
 import { JOB_EXTRACTION_PROMPT } from "@/lib/ai/prompts";
 import {
   JobRequirementsSchema,
@@ -10,5 +10,9 @@ export function extractJD(jobText: string): Promise<JobRequirements> {
     prompt: JOB_EXTRACTION_PROMPT,
     schema: JobRequirementsSchema,
     sourceText: jobText,
-  });
+  }).then((job) => ({
+    ...job,
+    mustHaveSkills: cleanSkillArray(job.mustHaveSkills),
+    niceToHaveSkills: cleanSkillArray(job.niceToHaveSkills),
+  }));
 }

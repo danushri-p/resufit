@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import {
   InvalidAIOutputError,
   OllamaRequestError,
+  OllamaTimeoutError,
   OllamaUnavailableError,
+  getOllamaModel,
 } from "@/lib/ai/client";
 import { extractJD } from "@/lib/ai/extractJD";
 import { extractResume } from "@/lib/ai/extractResume";
@@ -59,8 +61,15 @@ export async function POST(request: Request) {
 
     if (error instanceof OllamaUnavailableError) {
       return errorResponse(
-        "Ollama is not running. Start Ollama and make sure the llama3.2 model is installed.",
+        `Ollama is not running. Start Ollama and make sure the ${getOllamaModel()} model is installed.`,
         503,
+      );
+    }
+
+    if (error instanceof OllamaTimeoutError) {
+      return errorResponse(
+        "Ollama took too long to respond. Try again, or use a shorter resume or job description.",
+        504,
       );
     }
 
@@ -70,7 +79,7 @@ export async function POST(request: Request) {
       });
       if (error.status === 404) {
         return errorResponse(
-          "The llama3.2 model is not installed. Run `ollama pull llama3.2`, then try again.",
+          `The ${getOllamaModel()} model is not installed. Run \`ollama pull ${getOllamaModel()}\`, then try again.`,
           503,
         );
       }
