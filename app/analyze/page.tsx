@@ -13,8 +13,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   JobRequirementsSchema,
+  MatchResultSchema,
   ResumeSchema,
   type JobRequirements,
+  type MatchResult,
   type Resume,
 } from "@/lib/schemas";
 
@@ -23,6 +25,10 @@ const MIN_JOB_TEXT_LENGTH = 50;
 interface ExtractionResult {
   resume: Resume;
   job: JobRequirements;
+}
+
+interface MatchAnalysisResponse extends MatchResult {
+  suggestionsError?: string;
 }
 
 function getApiError(value: unknown): string | undefined {
@@ -53,6 +59,23 @@ function parseExtractionResult(value: unknown): ExtractionResult | undefined {
   return { resume: resume.data, job: job.data };
 }
 
+function parseMatchAnalysis(value: unknown): MatchAnalysisResponse | undefined {
+  const result = MatchResultSchema.safeParse(value);
+  if (!result.success) {
+    return undefined;
+  }
+
+  const suggestionsError =
+    typeof value === "object" &&
+    value !== null &&
+    "suggestionsError" in value &&
+    typeof value.suggestionsError === "string"
+      ? value.suggestionsError
+      : undefined;
+
+  return { ...result.data, suggestionsError };
+}
+
 function SkillChips({ skills }: { skills: string[] }) {
   if (skills.length === 0) {
     return <p className="text-sm text-stone-500">None listed.</p>;
@@ -72,22 +95,58 @@ function SkillChips({ skills }: { skills: string[] }) {
   );
 }
 
+function MatchSkillChips({
+  skills,
+  status,
+}: {
+  skills: string[];
+  status: "matched" | "missing";
+}) {
+  if (skills.length === 0) {
+    return <p className="text-sm text-stone-500">None.</p>;
+  }
+
+  const colorClass =
+    status === "matched"
+      ? "bg-green-50 text-green-800"
+      : "bg-red-50 text-red-800";
+
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {skills.map((skill, index) => (
+        <li
+          key={`${skill}-${index}`}
+          className={`rounded-full px-3 py-1 text-sm ${colorClass}`}
+        >
+          {skill}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function AnalyzePage() {
   const [resume, setResume] = useState<ResumeUploadResult>();
   const [jobText, setJobText] = useState("");
   const [result, setResult] = useState<ExtractionResult>();
+  const [match, setMatch] = useState<MatchAnalysisResponse>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
   const [error, setError] = useState<string>();
+  const [matchError, setMatchError] = useState<string>();
 
   const canAnalyze =
     Boolean(resume?.text.trim()) &&
     jobText.trim().length >= MIN_JOB_TEXT_LENGTH &&
-    !isAnalyzing;
+    !isAnalyzing &&
+    !isMatching;
 
   function handleResumeExtracted(upload: ResumeUploadResult) {
     setResume(upload);
     setResult(undefined);
+    setMatch(undefined);
     setError(undefined);
+    setMatchError(undefined);
   }
 
   async function handleAnalyze() {
@@ -97,7 +156,9 @@ export default function AnalyzePage() {
 
     setIsAnalyzing(true);
     setResult(undefined);
+    setMatch(undefined);
     setError(undefined);
+    setMatchError(undefined);
 
     try {
       const response = await fetch("/api/extract", {
@@ -122,6 +183,40 @@ export default function AnalyzePage() {
       }
 
       setResult(parsedResult);
+      setIsMatching(true);
+      setIsAnalyzing(false);
+      try {
+        const matchResponse = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsedResult),
+        });
+        const matchPayload: unknown = await matchResponse.json();
+
+        if (!matchResponse.ok) {
+          throw new Error(
+            getApiError(matchPayload) ?? "Could not analyze the resume match.",
+          );
+        }
+
+        const parsedMatch = parseMatchAnalysis(matchPayload);
+        if (!parsedMatch) {
+          throw new Error("The server returned match results in an unexpected format.");
+        }
+
+        setMatch(parsedMatch);
+        if (parsedMatch.suggestionsError) {
+          setMatchError(parsedMatch.suggestionsError);
+        }
+      } catch (matchAnalysisError) {
+        setMatchError(
+          matchAnalysisError instanceof Error
+            ? matchAnalysisError.message
+            : "Could not analyze the resume match. Please try again.",
+        );
+      } finally {
+        setIsMatching(false);
+      }
     } catch (analyzeError) {
       setError(
         analyzeError instanceof Error
@@ -179,7 +274,9 @@ export default function AnalyzePage() {
               onChange={(event) => {
                 setJobText(event.target.value);
                 setResult(undefined);
+                setMatch(undefined);
                 setError(undefined);
+                setMatchError(undefined);
               }}
               placeholder="Paste the job description here..."
               rows={8}
@@ -198,9 +295,9 @@ export default function AnalyzePage() {
               disabled={!canAnalyze}
               onClick={() => void handleAnalyze()}
             >
-              {isAnalyzing ? "Analyzing…" : "Analyze"}
+              {isAnalyzing || isMatching ? "Analyzing…" : "Analyze"}
             </Button>
-            {isAnalyzing && (
+            {isAnalyzing && !isMatching && (
               <p className="text-sm text-indigo-700" role="status">
                 Extracting structured details from both documents…
               </p>
@@ -215,6 +312,118 @@ export default function AnalyzePage() {
 
         {result && (
           <section aria-label="Analysis results" className="grid gap-6">
+            {(match || isMatching || matchError) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Match analysis</CardTitle>
+                  <CardDescription>
+                    Deterministic skill and experience match with tailored suggestions.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {isMatching && (
+                    <p className="text-sm text-indigo-700" role="status">
+                      Calculating your match and generating suggestions…
+                    </p>
+                  )}
+                  {match && (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-baseline gap-3">
+                          <p className="text-5xl font-semibold tracking-tight text-stone-900">
+                            {match.score}
+                            <span className="text-2xl text-stone-500">/100</span>
+                          </p>
+                          <p className="text-lg font-medium text-indigo-800">
+                            {match.label}
+                          </p>
+                        </div>
+                        <div
+                          role="progressbar"
+                          aria-label="Resume match score"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={match.score}
+                          className="h-3 overflow-hidden rounded-full bg-stone-200"
+                        >
+                          <div
+                            className="h-full rounded-full bg-indigo-600"
+                            style={{ width: `${match.score}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-stone-900">
+                            Matched must-have skills
+                          </h3>
+                          <MatchSkillChips
+                            skills={match.matchedMustHave}
+                            status="matched"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-stone-900">
+                            Missing must-have skills
+                          </h3>
+                          <MatchSkillChips
+                            skills={match.missingMustHave}
+                            status="missing"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-stone-900">
+                            Matched nice-to-have skills
+                          </h3>
+                          <MatchSkillChips
+                            skills={match.matchedNiceToHave}
+                            status="matched"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="font-medium text-stone-900">
+                            Missing nice-to-have skills
+                          </h3>
+                          <MatchSkillChips
+                            skills={match.missingNiceToHave}
+                            status="missing"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-stone-900">
+                          Resume improvements
+                        </h3>
+                        {match.suggestions.length > 0 ? (
+                          <ol className="list-decimal space-y-3 pl-5 text-sm text-stone-700">
+                            {match.suggestions.map((suggestion, index) => (
+                              <li key={`${suggestion.title}-${index}`}>
+                                <span className="font-medium text-stone-900">
+                                  {suggestion.title}
+                                </span>
+                                {`: ${suggestion.detail}`}
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="text-sm text-stone-500">
+                            No suggestions were returned.
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {matchError && (
+                    <p className="text-sm text-red-600" role="alert">
+                      {matchError}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Your resume</CardTitle>
