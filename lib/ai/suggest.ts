@@ -1,4 +1,4 @@
-import { extractWithOllama } from "@/lib/ai/client";
+import { generateStructured } from "@/lib/ai/client";
 import { RESUME_SUGGESTIONS_PROMPT } from "@/lib/ai/prompts";
 import {
   SuggestionsSchema,
@@ -113,7 +113,7 @@ export function suggestResumeImprovements(
       })()
     : undefined;
 
-  return extractWithOllama({
+  return generateStructured({
     prompt: RESUME_SUGGESTIONS_PROMPT,
     schema: SuggestionsSchema,
     sourceText: userMessage,

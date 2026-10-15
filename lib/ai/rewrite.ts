@@ -1,4 +1,4 @@
-import { extractWithOllama } from "@/lib/ai/client";
+import { generateStructured } from "@/lib/ai/client";
 import { canUseRewrite } from "@/lib/ai/guards";
 import { BULLET_REWRITE_PROMPT } from "@/lib/ai/prompts";
 import {
@@ -95,7 +95,7 @@ export async function rewriteBullets(
     ...missingSkills,
     ...COMMON_TECHNOLOGIES,
   ];
-  const { rewrites } = await extractWithOllama({
+  const { rewrites } = await generateStructured({
     prompt: BULLET_REWRITE_PROMPT,
     schema: BulletRewritesSchema,
     sourceText,

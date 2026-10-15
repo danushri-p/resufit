@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ProviderFooter } from "@/components/ProviderFooter";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-10 bg-stone-50 px-6 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-10 bg-stone-50 px-6 py-10 text-center">
       <Image
         src="/resufit-logo.svg"
         alt="ResuFit"
@@ -31,6 +32,7 @@ export default function Home() {
       >
         Try it
       </Link>
+      <ProviderFooter />
     </main>
   );
 }

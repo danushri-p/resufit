@@ -22,6 +22,20 @@ ResuFit is a resume analyzer built with Next.js, TypeScript, and Tailwind CSS. R
 
 The app uses `http://127.0.0.1:11434` and the `llama3.2` model by default. Set `OLLAMA_BASE_URL` or `OLLAMA_MODEL` in `.env.local` only if you need different values; no API key is needed.
 
+## Day 6: Deploy
+
+For local use, Ollama works unchanged with the defaults above. To use Gemini locally, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`; `GEMINI_MODEL` defaults to `gemini-2.5-flash`. Set `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini` if you want the footer to show Gemini.
+
+To deploy on Vercel:
+
+1. Import the GitHub repository into Vercel.
+2. Add `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in the project's environment variables. Create the key at [Google AI Studio](https://aistudio.google.com/apikey). Set `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini` so the public footer matches the provider.
+3. Deploy the project.
+
+The free Gemini tier has rate limits. Analysis history is stored per browser and is not shared across browsers or devices.
+
+Public AI endpoints limit resume text to 20,000 characters, job descriptions to 10,000 characters, and each IP to 10 AI requests per minute. The in-memory limit is a basic safeguard and resets across serverless instances.
+
 ## Features
 
 - Upload a PDF or DOCX resume up to 5 MB on `/analyze`.
