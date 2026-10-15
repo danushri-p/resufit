@@ -25,6 +25,7 @@ import {
 import { buildMarkdownReport } from "@/lib/report";
 import { saveHistoryEntry, updateHistoryEntry } from "@/lib/history";
 import { ProviderFooter } from "@/components/ProviderFooter";
+import { readApiResponse } from "@/lib/apiResponse";
 
 const MIN_JOB_TEXT_LENGTH = 50;
 
@@ -250,7 +251,7 @@ export default function AnalyzePage() {
           jobText: jobText.trim(),
         }),
       });
-      const payload: unknown = await response.json();
+      const payload = await readApiResponse(response);
       if (requestId !== analysisRequestId.current) return;
 
       if (!response.ok) {
@@ -277,7 +278,7 @@ export default function AnalyzePage() {
             jobText: jobText.trim(),
           }),
         });
-        const matchPayload: unknown = await matchResponse.json();
+        const matchPayload = await readApiResponse(matchResponse);
         if (requestId !== analysisRequestId.current) return;
 
         if (!matchResponse.ok) {
@@ -361,7 +362,7 @@ export default function AnalyzePage() {
           jobText: jobText.trim(),
         }),
       });
-      const payload: unknown = await response.json();
+      const payload = await readApiResponse(response);
 
       if (!response.ok) {
         throw new Error(
