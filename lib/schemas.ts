@@ -44,5 +44,25 @@ export const JobRequirementsSchema = z.object({
   keywords: z.array(z.string()),
 });
 
+export const SuggestionsSchema = z.object({
+  suggestions: z.array(
+    z.object({
+      title: z.string(),
+      detail: z.string(),
+    }),
+  ),
+});
+
+export const MatchResultSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  label: z.enum(["Strong match", "Good match", "Partial match", "Weak match"]),
+  matchedMustHave: z.array(z.string()),
+  missingMustHave: z.array(z.string()),
+  matchedNiceToHave: z.array(z.string()),
+  missingNiceToHave: z.array(z.string()),
+  suggestions: SuggestionsSchema.shape.suggestions,
+});
+
 export type Resume = z.infer<typeof ResumeSchema>;
 export type JobRequirements = z.infer<typeof JobRequirementsSchema>;
+export type MatchResult = z.infer<typeof MatchResultSchema>;
