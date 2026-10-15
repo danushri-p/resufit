@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { readApiResponse } from "@/lib/apiResponse";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -84,7 +85,7 @@ export function UploadBox({ onTextExtracted }: UploadBoxProps) {
         method: "POST",
         body: formData,
       });
-      const payload: unknown = await response.json();
+      const payload = await readApiResponse(response);
 
       if (!response.ok) {
         throw new Error(
