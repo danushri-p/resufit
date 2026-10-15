@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { UploadBox, type ResumeUploadResult } from "@/components/UploadBox";
+import { AnalysisCards } from "@/components/results/AnalysisCards";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +23,7 @@ import {
   type Resume,
 } from "@/lib/schemas";
 import { buildMarkdownReport } from "@/lib/report";
+import { saveHistoryEntry, updateHistoryEntry } from "@/lib/history";
 
 const MIN_JOB_TEXT_LENGTH = 50;
 
@@ -174,8 +177,12 @@ export default function AnalyzePage() {
   const [matchError, setMatchError] = useState<string>();
   const [rewriteError, setRewriteError] = useState<string>();
   const [copiedBullet, setCopiedBullet] = useState<string>();
+  const [uploadBoxKey, setUploadBoxKey] = useState(0);
   const copyTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const analysisRequestId = useRef(0);
   const rewriteRequestId = useRef(0);
+  const historyId = useRef<string | undefined>(undefined);
+  const resultsHeading = useRef<HTMLHeadingElement>(null);
 
   const canAnalyze =
     Boolean(resume?.text.trim()) &&
@@ -184,6 +191,7 @@ export default function AnalyzePage() {
     !isMatching;
 
   function handleResumeExtracted(upload: ResumeUploadResult) {
+    analysisRequestId.current += 1;
     rewriteRequestId.current += 1;
     setResume(upload);
     setResult(undefined);
@@ -193,12 +201,35 @@ export default function AnalyzePage() {
     setMatchError(undefined);
     setRewriteError(undefined);
     setCopiedBullet(undefined);
+    setIsAnalyzing(false);
+    setIsMatching(false);
     setIsRewriting(false);
+    historyId.current = undefined;
+  }
+
+  function handleStartOver() {
+    analysisRequestId.current += 1;
+    rewriteRequestId.current += 1;
+    setResume(undefined);
+    setJobText("");
+    setResult(undefined);
+    setMatch(undefined);
+    setRewrites(undefined);
+    setError(undefined);
+    setMatchError(undefined);
+    setRewriteError(undefined);
+    setIsAnalyzing(false);
+    setIsMatching(false);
+    setIsRewriting(false);
+    setCopiedBullet(undefined);
+    setUploadBoxKey((key) => key + 1);
+    historyId.current = undefined;
   }
 
   async function handleAnalyze() {
     if (!canAnalyze || !resume) return;
 
+    const requestId = ++analysisRequestId.current;
     rewriteRequestId.current += 1;
     setIsAnalyzing(true);
     setResult(undefined);
@@ -219,6 +250,7 @@ export default function AnalyzePage() {
         }),
       });
       const payload: unknown = await response.json();
+      if (requestId !== analysisRequestId.current) return;
 
       if (!response.ok) {
         throw new Error(
@@ -238,9 +270,10 @@ export default function AnalyzePage() {
         const matchResponse = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(parsedResult),
+          body: JSON.stringify({ ...parsedResult, resumeText: resume.text }),
         });
         const matchPayload: unknown = await matchResponse.json();
+        if (requestId !== analysisRequestId.current) return;
 
         if (!matchResponse.ok) {
           throw new Error(
@@ -254,26 +287,45 @@ export default function AnalyzePage() {
         }
 
         setMatch(parsedMatch);
+        const savedHistoryId = saveHistoryEntry({
+          fileName: resume.fileName,
+          jobTitle: parsedResult.job.jobTitle ?? "Untitled job",
+          company: parsedResult.job.company ?? "",
+          matchScore: parsedMatch.score,
+          atsScore: parsedMatch.ats.score,
+          result: {
+            ...parsedResult,
+            match: parsedMatch,
+            ats: parsedMatch.ats,
+          },
+        });
+        historyId.current = savedHistoryId;
         if (parsedMatch.suggestionsError) {
           setMatchError(parsedMatch.suggestionsError);
         }
       } catch (matchAnalysisError) {
+        if (requestId !== analysisRequestId.current) return;
         setMatchError(
           matchAnalysisError instanceof Error
             ? matchAnalysisError.message
             : "Could not analyze the resume match. Please try again.",
         );
       } finally {
-        setIsMatching(false);
+        if (requestId === analysisRequestId.current) {
+          setIsMatching(false);
+        }
       }
     } catch (analyzeError) {
+      if (requestId !== analysisRequestId.current) return;
       setError(
         analyzeError instanceof Error
           ? analyzeError.message
           : "Could not analyze the resume and job description. Please try again.",
       );
     } finally {
-      setIsAnalyzing(false);
+      if (requestId === analysisRequestId.current) {
+        setIsAnalyzing(false);
+      }
     }
   }
 
@@ -316,6 +368,15 @@ export default function AnalyzePage() {
       }
       if (requestId !== rewriteRequestId.current) return;
       setRewrites(parsedRewrites);
+      if (historyId.current) {
+        updateHistoryEntry(historyId.current, {
+          resume: result.resume,
+          job: result.job,
+          match,
+          ats: match.ats,
+          rewrites: parsedRewrites,
+        });
+      }
     } catch (rewriteFailure) {
       if (requestId !== rewriteRequestId.current) return;
       setRewriteError(
@@ -377,6 +438,13 @@ export default function AnalyzePage() {
     [],
   );
 
+  useEffect(() => {
+    if (match) {
+      resultsHeading.current?.focus();
+      resultsHeading.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [match]);
+
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
@@ -387,9 +455,23 @@ export default function AnalyzePage() {
           <p className="text-stone-600">
             Upload your resume and add the job description you have in mind.
           </p>
+          <Link
+            href="/history"
+            className="inline-flex rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            History
+          </Link>
         </header>
 
-        <UploadBox onTextExtracted={handleResumeExtracted} />
+        <nav aria-label="Analysis steps" className="flex flex-wrap items-center gap-2 text-sm">
+          {["Upload", "Job description", "Results"].map((step, index) => {
+            const activeStep =
+              match || isAnalyzing || isMatching ? 2 : resume ? 1 : 0;
+            return <span key={step} className={`rounded-full px-3 py-1 ${index === activeStep ? "bg-indigo-100 font-medium text-indigo-900" : "text-stone-500"}`}>{index + 1}. {step}{index < 2 ? " →" : ""}</span>;
+          })}
+        </nav>
+
+        <UploadBox key={uploadBoxKey} onTextExtracted={handleResumeExtracted} />
 
         <Card>
           <CardHeader>
@@ -403,7 +485,7 @@ export default function AnalyzePage() {
           <CardContent>
             <pre
               aria-live="polite"
-              className="max-h-80 min-h-40 overflow-y-auto whitespace-pre-wrap rounded-md bg-stone-100 p-4 font-sans text-sm leading-6 text-stone-800"
+              className="max-h-80 min-h-40 overflow-y-auto break-words whitespace-pre-wrap rounded-md bg-stone-100 p-4 font-sans text-sm leading-6 text-stone-800"
             >
               {resume?.text ?? "No resume text to preview yet."}
             </pre>
@@ -421,15 +503,19 @@ export default function AnalyzePage() {
             <Textarea
               value={jobText}
               onChange={(event) => {
+                analysisRequestId.current += 1;
                 rewriteRequestId.current += 1;
                 setJobText(event.target.value);
                 setResult(undefined);
                 setMatch(undefined);
                 setRewrites(undefined);
+                setIsAnalyzing(false);
+                setIsMatching(false);
                 setIsRewriting(false);
                 setError(undefined);
                 setMatchError(undefined);
                 setRewriteError(undefined);
+                historyId.current = undefined;
               }}
               placeholder="Paste the job description here..."
               rows={8}
@@ -463,8 +549,48 @@ export default function AnalyzePage() {
           </CardContent>
         </Card>
 
-        {result && (
-          <section aria-label="Analysis results" className="grid gap-6">
+        {result && match && (
+          <section aria-label="Analysis results" className="grid min-w-0 gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2
+                ref={resultsHeading}
+                tabIndex={-1}
+                className="text-2xl font-semibold text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+              >
+                Results
+              </h2>
+              <Button type="button" variant="outline" onClick={handleStartOver}>
+                Start over
+              </Button>
+            </div>
+            <AnalysisCards
+              resume={result.resume}
+              job={result.job}
+              match={match}
+              rewrites={rewrites}
+              isRewriting={isRewriting}
+              matchError={matchError}
+              rewriteError={rewriteError}
+              copiedBullet={copiedBullet}
+              onRewrite={() => void handleRewriteBullets()}
+              onDownload={downloadReport}
+              onCopy={(id, content) => void copyBullet(id, content)}
+            />
+          </section>
+        )}
+
+        {Boolean(result && !match) && result && (
+          <section aria-label="Analysis results" className="grid min-w-0 gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 ref={resultsHeading} tabIndex={-1} className="text-2xl font-semibold text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
+                Results
+              </h2>
+              {match && (
+                <Button type="button" variant="outline" onClick={handleStartOver}>
+                  Start over
+                </Button>
+              )}
+            </div>
             {(match || isMatching || matchError) && (
               <Card>
                 <CardHeader>

@@ -71,6 +71,17 @@ export const MatchResultSchema = z.object({
   matchedNiceToHave: z.array(z.string()),
   missingNiceToHave: z.array(z.string()),
   suggestions: SuggestionsSchema.shape.suggestions,
+  ats: z.object({
+    score: z.number().int().min(0).max(100),
+    checks: z.array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        status: z.enum(["pass", "warn", "fail"]),
+        detail: z.string(),
+      }),
+    ),
+  }),
 });
 
 export type Resume = z.infer<typeof ResumeSchema>;
@@ -83,3 +94,11 @@ export interface ProjectBulletRewrites {
   projectName: string;
   rewrites: BulletRewrite[];
 }
+export type AtsResult = z.infer<typeof MatchResultSchema>["ats"];
+export type AnalysisResult = {
+  resume: Resume;
+  job: JobRequirements;
+  match: MatchResult;
+  ats: AtsResult;
+  rewrites?: ProjectBulletRewrites[];
+};

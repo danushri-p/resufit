@@ -50,6 +50,11 @@ export function buildMarkdownReport({
     ...(resume.name ? [`Candidate: ${resume.name}`] : []),
     `Job: ${jobTitle}${job.company ? ` at ${job.company}` : ""}`,
     `## Match score: ${match.score}/100 — ${match.label}`,
+    `## ATS score: ${match.ats.score}/100`,
+    ...match.ats.checks.flatMap((check) => [
+      `### ${check.label} — ${check.status.toUpperCase()}`,
+      check.detail,
+    ]),
     "## Must-have skills",
     "### Matched",
     skillList(match.matchedMustHave),

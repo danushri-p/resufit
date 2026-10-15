@@ -35,6 +35,10 @@ The `POST /api/resume` endpoint extracts document text. The `POST /api/extract` 
 
 After extraction, ResuFit compares resume skills (including project tech stacks) with the job's must-have and nice-to-have skills. The match score weights must-have coverage at 70%, nice-to-have coverage at 20%, and experience at 10%. Empty skill lists receive full coverage points. When years of experience are required, each listed experience entry counts as one year and projects count as zero; the score is rounded to a whole number. Ollama generates up to five resume improvement suggestions separately, so suggestion failures do not affect the score.
 
+## Day 5: ATS checks and history
+
+The deterministic ATS check reports email/phone presence, Skills/Education/Experience-or-Projects headings, a 300–900 word target, job keyword coverage (70% pass, 40% warning), strong action verbs in bullets (70% pass, 40% warning), and whether bullets include real numbers. Its score averages each check as 100 for pass, 50 for warning, and 0 for fail. Analyses are saved only in this browser's local storage, with up to ten recent entries. Open the **History** page from the home or analysis header to review or delete saved analyses.
+
 ## Day 4: Bullet rewriting and reports
 
 ResuFit can rewrite project bullets to better match a job while preserving their original facts and project technologies. Unsupported numbers, missing skills, and unverified technologies are rejected, leaving the original bullet unchanged. Download a Markdown report from the match analysis card to save the score, skills, suggestions, and any improved bullets. Run unit tests with `npm test`.
