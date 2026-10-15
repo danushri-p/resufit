@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UploadBox, type ResumeUploadResult } from "@/components/UploadBox";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +17,10 @@ import {
   ResumeSchema,
   type JobRequirements,
   type MatchResult,
+  type ProjectBulletRewrites,
   type Resume,
 } from "@/lib/schemas";
+import { buildMarkdownReport } from "@/lib/report";
 
 const MIN_JOB_TEXT_LENGTH = 50;
 
@@ -76,6 +78,40 @@ function parseMatchAnalysis(value: unknown): MatchAnalysisResponse | undefined {
   return { ...result.data, suggestionsError };
 }
 
+function parseProjectRewrites(value: unknown): ProjectBulletRewrites[] | undefined {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("rewrites" in value) ||
+    !Array.isArray(value.rewrites)
+  ) {
+    return undefined;
+  }
+
+  const valid = value.rewrites.every(
+    (project: unknown) =>
+      typeof project === "object" &&
+      project !== null &&
+      "projectName" in project &&
+      typeof project.projectName === "string" &&
+      "rewrites" in project &&
+      Array.isArray(project.rewrites) &&
+      project.rewrites.every(
+        (rewrite: unknown) =>
+          typeof rewrite === "object" &&
+          rewrite !== null &&
+          "original" in rewrite &&
+          typeof rewrite.original === "string" &&
+          "rewritten" in rewrite &&
+          typeof rewrite.rewritten === "string" &&
+          "reason" in rewrite &&
+          typeof rewrite.reason === "string",
+      ),
+  );
+
+  return valid ? (value.rewrites as ProjectBulletRewrites[]) : undefined;
+}
+
 function SkillChips({ skills }: { skills: string[] }) {
   if (skills.length === 0) {
     return <p className="text-sm text-stone-500">None listed.</p>;
@@ -130,10 +166,16 @@ export default function AnalyzePage() {
   const [jobText, setJobText] = useState("");
   const [result, setResult] = useState<ExtractionResult>();
   const [match, setMatch] = useState<MatchAnalysisResponse>();
+  const [rewrites, setRewrites] = useState<ProjectBulletRewrites[]>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
+  const [isRewriting, setIsRewriting] = useState(false);
   const [error, setError] = useState<string>();
   const [matchError, setMatchError] = useState<string>();
+  const [rewriteError, setRewriteError] = useState<string>();
+  const [copiedBullet, setCopiedBullet] = useState<string>();
+  const copyTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const rewriteRequestId = useRef(0);
 
   const canAnalyze =
     Boolean(resume?.text.trim()) &&
@@ -142,23 +184,30 @@ export default function AnalyzePage() {
     !isMatching;
 
   function handleResumeExtracted(upload: ResumeUploadResult) {
+    rewriteRequestId.current += 1;
     setResume(upload);
     setResult(undefined);
     setMatch(undefined);
+    setRewrites(undefined);
     setError(undefined);
     setMatchError(undefined);
+    setRewriteError(undefined);
+    setCopiedBullet(undefined);
+    setIsRewriting(false);
   }
 
   async function handleAnalyze() {
-    if (!canAnalyze || !resume) {
-      return;
-    }
+    if (!canAnalyze || !resume) return;
 
+    rewriteRequestId.current += 1;
     setIsAnalyzing(true);
     setResult(undefined);
     setMatch(undefined);
+    setRewrites(undefined);
     setError(undefined);
     setMatchError(undefined);
+    setRewriteError(undefined);
+    setIsRewriting(false);
 
     try {
       const response = await fetch("/api/extract", {
@@ -228,6 +277,106 @@ export default function AnalyzePage() {
     }
   }
 
+  async function handleRewriteBullets() {
+    if (!result || !match || isRewriting) return;
+
+    const requestId = ++rewriteRequestId.current;
+    setIsRewriting(true);
+    setRewrites(undefined);
+    setRewriteError(undefined);
+
+    try {
+      const response = await fetch("/api/rewrite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resume: result.resume,
+          job: result.job,
+          matchedSkills: [
+            ...match.matchedMustHave,
+            ...match.matchedNiceToHave,
+          ],
+          missingSkills: [
+            ...match.missingMustHave,
+            ...match.missingNiceToHave,
+          ],
+        }),
+      });
+      const payload: unknown = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          getApiError(payload) ?? "Could not improve the resume bullets.",
+        );
+      }
+
+      const parsedRewrites = parseProjectRewrites(payload);
+      if (!parsedRewrites) {
+        throw new Error("The server returned bullet rewrites in an unexpected format.");
+      }
+      if (requestId !== rewriteRequestId.current) return;
+      setRewrites(parsedRewrites);
+    } catch (rewriteFailure) {
+      if (requestId !== rewriteRequestId.current) return;
+      setRewriteError(
+        rewriteFailure instanceof Error
+          ? rewriteFailure.message
+          : "Could not improve the resume bullets. Please try again.",
+      );
+    } finally {
+      if (requestId === rewriteRequestId.current) {
+        setIsRewriting(false);
+      }
+    }
+  }
+
+  async function copyBullet(id: string, content: string) {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedBullet(id);
+      if (copyTimeout.current) {
+        clearTimeout(copyTimeout.current);
+      }
+      copyTimeout.current = setTimeout(() => setCopiedBullet(undefined), 2000);
+    } catch {
+      setRewriteError("Could not copy the bullet to the clipboard.");
+    }
+  }
+
+  function downloadReport() {
+    if (!result || !match) return;
+
+    const report = buildMarkdownReport({
+      fileName: resume?.fileName ?? "resume",
+      resume: result.resume,
+      job: result.job,
+      match,
+      rewrites,
+    });
+    const jobSlug =
+      (result.job.jobTitle ?? "job")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "job";
+    const blob = new Blob([report], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `resufit-report-${jobSlug}.md`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  useEffect(
+    () => () => {
+      if (copyTimeout.current) {
+        clearTimeout(copyTimeout.current);
+      }
+    },
+    [],
+  );
+
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
@@ -272,11 +421,15 @@ export default function AnalyzePage() {
             <Textarea
               value={jobText}
               onChange={(event) => {
+                rewriteRequestId.current += 1;
                 setJobText(event.target.value);
                 setResult(undefined);
                 setMatch(undefined);
+                setRewrites(undefined);
+                setIsRewriting(false);
                 setError(undefined);
                 setMatchError(undefined);
+                setRewriteError(undefined);
               }}
               placeholder="Paste the job description here..."
               rows={8}
@@ -413,11 +566,93 @@ export default function AnalyzePage() {
                           </p>
                         )}
                       </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          type="button"
+                          disabled={isRewriting}
+                          onClick={() => void handleRewriteBullets()}
+                        >
+                          {isRewriting ? "Improving bullets…" : "Improve bullets"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={downloadReport}
+                        >
+                          Download report
+                        </Button>
+                      </div>
+                      {isRewriting && (
+                        <p className="text-sm text-indigo-700" role="status">
+                          Rewriting project bullets…
+                        </p>
+                      )}
+                      {rewriteError && (
+                        <p className="text-sm text-red-600" role="alert">
+                          {rewriteError}
+                        </p>
+                      )}
                     </>
                   )}
                   {matchError && (
                     <p className="text-sm text-red-600" role="alert">
                       {matchError}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {rewrites && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Improved bullets</CardTitle>
+                  <CardDescription>
+                    Rewrites preserve each project bullet&apos;s facts and technologies.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {rewrites.length > 0 ? (
+                    rewrites.map((project) => (
+                      <section key={project.projectName} className="space-y-3">
+                        <h3 className="font-medium text-stone-900">
+                          {project.projectName}
+                        </h3>
+                        <ul className="space-y-4">
+                          {project.rewrites.map((rewrite, index) => {
+                            const id = `${project.projectName}-${index}`;
+                            const changed = rewrite.original !== rewrite.rewritten;
+                            return (
+                              <li key={id} className="space-y-1 border-l-2 border-indigo-200 pl-4">
+                                <p className={`text-sm ${changed ? "text-stone-500 line-through" : "text-stone-700"}`}>
+                                  {rewrite.original}
+                                </p>
+                                <p className="text-sm text-stone-900">
+                                  {rewrite.rewritten}
+                                </p>
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-xs text-stone-500">
+                                    {rewrite.reason}
+                                  </p>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => void copyBullet(id, rewrite.rewritten)}
+                                  >
+                                    {copiedBullet === id ? "Copied" : "Copy"}
+                                  </Button>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    ))
+                  ) : (
+                    <p className="text-sm text-stone-500">
+                      No project bullets are available to improve.
                     </p>
                   )}
                 </CardContent>
