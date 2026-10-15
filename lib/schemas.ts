@@ -53,6 +53,16 @@ export const SuggestionsSchema = z.object({
   ),
 });
 
+export const BulletRewritesSchema = z.object({
+  rewrites: z.array(
+    z.object({
+      original: z.string(),
+      rewritten: z.string(),
+      reason: z.string(),
+    }),
+  ),
+});
+
 export const MatchResultSchema = z.object({
   score: z.number().int().min(0).max(100),
   label: z.enum(["Strong match", "Good match", "Partial match", "Weak match"]),
@@ -66,3 +76,10 @@ export const MatchResultSchema = z.object({
 export type Resume = z.infer<typeof ResumeSchema>;
 export type JobRequirements = z.infer<typeof JobRequirementsSchema>;
 export type MatchResult = z.infer<typeof MatchResultSchema>;
+export type BulletRewrite = z.infer<
+  typeof BulletRewritesSchema
+>["rewrites"][number];
+export interface ProjectBulletRewrites {
+  projectName: string;
+  rewrites: BulletRewrite[];
+}

@@ -18,3 +18,7 @@ Prefer suggestions that rewrite or highlight what is ALREADY in the resume: ment
 Only suggest rewording or reordering text that is already in the resume. Example bullets must use only technologies listed for that project.
 
 Never mention JSON, fields, null, empty sections, or "the candidate". Return a suggestions array of objects with a short title and actionable detail.`;
+
+export const BULLET_REWRITE_PROMPT = `Rewrite each resume project bullet to better match the job.
+
+Keep the same meaning and facts. Use only technologies listed for that project. Never add numbers, results, or tools that are not in the original bullet. Use "[X%]" if a metric would help. Keep each bullet under 25 words. Start with a strong action verb. Give one short sentence for each reason.`;

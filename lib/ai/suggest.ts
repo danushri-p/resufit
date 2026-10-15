@@ -5,7 +5,7 @@ import {
   type JobRequirements,
   type Resume,
 } from "@/lib/schemas";
-import { normalizeSkill } from "@/lib/matching/skills";
+import { shouldDropSuggestion } from "@/lib/ai/guards";
 
 function text(value: string | null | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -88,77 +88,6 @@ function buildSuggestionContext(
   return { userMessage, resumeText: resumeText.join("\n") };
 }
 
-function containsUnsupportedNumbers(
-  suggestion: { title: string; detail: string },
-  resumeText: string,
-): boolean {
-  const content = `${suggestion.title}\n${suggestion.detail}`.replace(
-    /\[(?:x%?|number)\]/gi,
-    "",
-  );
-
-  if (/\d+(?:[.,]\d+)*\s*(?:%|percent\b)/i.test(content)) {
-    return true;
-  }
-
-  const resumeNumbers = new Set(
-    resumeText.match(/\d+(?:[.,]\d+)*(?:\+)?/g)?.map((number) =>
-      number.replace(/,/g, ""),
-    ) ?? [],
-  );
-  const suggestionNumbers =
-    content.match(/\d+(?:[.,]\d+)*(?:\+)?/g) ?? [];
-
-  return suggestionNumbers.some(
-    (number) => !resumeNumbers.has(number.replace(/,/g, "")),
-  );
-}
-
-function mentionsMissingSkill(content: string, missingSkills: string[]): boolean {
-  const words =
-    content.match(/[\p{L}\p{N}+#]+(?:\.[\p{L}\p{N}+#]+)*/gu) ?? [];
-  const normalizedMissingSkills = new Set(
-    missingSkills.map(normalizeSkill).filter(Boolean),
-  );
-
-  for (let start = 0; start < words.length; start += 1) {
-    for (let end = start + 1; end <= Math.min(start + 5, words.length); end += 1) {
-      if (normalizedMissingSkills.has(normalizeSkill(words.slice(start, end).join(" ")))) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-function containsLearningPhrase(content: string): boolean {
-  return /\b(?:learn|build a|practice|course|tutorial|side project)\b/i.test(
-    content,
-  );
-}
-
-function repeatsQuotedText(detail: string): boolean {
-  const quotedText = Array.from(
-    detail.matchAll(/["'`]([^"'`]+)["'`]|“([^”]+)”|‘([^’]+)’/g),
-    (match) => (match[1] ?? match[2] ?? match[3]).trim().toLowerCase(),
-  );
-
-  return new Set(quotedText).size < quotedText.length;
-}
-
-function hasDishonestSkillClaim(
-  suggestion: { title: string; detail: string },
-  missingSkills: string[],
-): boolean {
-  const content = `${suggestion.title}\n${suggestion.detail}`;
-  return (
-    (mentionsMissingSkill(content, missingSkills) &&
-      !containsLearningPhrase(content)) ||
-    repeatsQuotedText(suggestion.detail)
-  );
-}
-
 export function suggestResumeImprovements(
   resume: Resume,
   job: JobRequirements,
@@ -195,8 +124,7 @@ export function suggestResumeImprovements(
       ...result.suggestions
         .filter(
           (suggestion) =>
-            !containsUnsupportedNumbers(suggestion, resumeText) &&
-            !hasDishonestSkillClaim(suggestion, [
+            !shouldDropSuggestion(suggestion, resumeText, [
               ...missingMustHave,
               ...missingNiceToHave,
             ]),
