@@ -7,13 +7,14 @@ export function createMatchResult(
   job: JobRequirements,
   ats: AtsResult,
   suggestions: MatchResult["suggestions"] = [],
+  resumeText = "",
 ): MatchResult {
   const resumeSkills = [
     ...resume.skills,
     ...resume.projects.flatMap((project) => project.techStack),
   ];
-  const mustHave = matchSkills(resumeSkills, job.mustHaveSkills);
-  const niceToHave = matchSkills(resumeSkills, job.niceToHaveSkills);
+  const mustHave = matchSkills(resumeSkills, job.mustHaveSkills, resumeText);
+  const niceToHave = matchSkills(resumeSkills, job.niceToHaveSkills, resumeText);
   const score = computeMatchScore(resume, job, mustHave, niceToHave);
 
   return {

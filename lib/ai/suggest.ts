@@ -123,11 +123,19 @@ export function suggestResumeImprovements(
       ...(deterministicSuggestion ? [deterministicSuggestion] : []),
       ...result.suggestions
         .filter(
-          (suggestion) =>
-            !shouldDropSuggestion(suggestion, resumeText, [
-              ...missingMustHave,
-              ...missingNiceToHave,
-            ]),
+          (suggestion) => {
+            const duplicatesDeterministicSuggestion =
+              deterministicSuggestion &&
+              suggestion.title.trim().toLowerCase() ===
+                deterministicSuggestion.title.toLowerCase();
+            return (
+              !duplicatesDeterministicSuggestion &&
+              !shouldDropSuggestion(suggestion, resumeText, [
+                ...missingMustHave,
+                ...missingNiceToHave,
+              ])
+            );
+          },
         )
         .slice(0, deterministicSuggestion ? 4 : 5),
     ],

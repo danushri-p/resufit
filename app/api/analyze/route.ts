@@ -64,7 +64,7 @@ export async function POST(request: Request) {
   const resume: Resume = parsedResume.data;
   const job: JobRequirements = parsedJob.data;
   const ats = runAtsChecks({ resumeText, resume, job });
-  const baseResult = createMatchResult(resume, job, ats);
+  const baseResult = createMatchResult(resume, job, ats, [], resumeText);
 
   try {
     const { suggestions } = await suggestResumeImprovements(
