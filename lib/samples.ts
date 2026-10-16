@@ -38,3 +38,21 @@ You will build and maintain user-facing features with React and TypeScript, conn
 The ideal candidate is studying computer science or a related subject and has completed a class, personal, or community project. We value thoughtful communication, willingness to ask questions, care for accessibility, and steady problem solving. You should be comfortable learning unfamiliar tools, explaining your changes, and collaborating with a small remote-friendly team.
 
 Previous professional experience is not required.`;
+
+export const sampleFrontendJobDescription = `Frontend Developer
+Fictional BrightPath Studio
+
+BrightPath Studio is a fictional product team creating clear, accessible tools for community learning. We are looking for a frontend developer to help build responsive interfaces and improve the experience across desktop and mobile devices.
+
+You will build reusable components with React and TypeScript, translate product needs into thoughtful user flows, and connect the frontend to REST APIs. You will collaborate with designers and engineers, test interfaces with keyboard navigation, and help improve accessibility and performance. Experience with Next.js, CSS, and browser testing is useful.
+
+The ideal candidate enjoys refining details, communicating decisions, and learning from feedback. Personal projects, coursework, or volunteer work are welcome. This role does not require prior professional experience.`;
+
+export const sampleBackendJobDescription = `Backend Developer Intern
+Fictional Harborlight Systems
+
+Harborlight Systems is a fictional engineering group building dependable services for small organizations. We are seeking an intern who wants to learn how APIs and data systems support useful products.
+
+You will implement REST API endpoints with Node.js and Express, work with PostgreSQL data models, and write tests for validation and error handling. You will help investigate service issues, document API behavior, and collaborate with frontend developers. Familiarity with SQL, Git, and basic deployment practices is helpful.
+
+We value careful problem solving, honest communication, and curiosity about secure, reliable software. Students may apply using class projects, personal work, or community contributions. Mentorship is provided, and professional experience is not required.`;

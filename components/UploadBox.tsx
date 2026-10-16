@@ -21,6 +21,7 @@ export interface ResumeUploadResult {
 interface UploadBoxProps {
   onTextExtracted: (result: ResumeUploadResult) => void;
   onUploadingChange?: (isUploading: boolean) => void;
+  disabled?: boolean;
 }
 
 function isResumeUploadResult(value: unknown): value is ResumeUploadResult {
@@ -52,6 +53,7 @@ function getApiError(value: unknown): string | undefined {
 export function UploadBox({
   onTextExtracted,
   onUploadingChange,
+  disabled = false,
 }: UploadBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>();
@@ -60,7 +62,7 @@ export function UploadBox({
   const [error, setError] = useState<string>();
 
   async function uploadFile(file: File) {
-    if (isUploading) {
+    if (isUploading || disabled) {
       return;
     }
 
@@ -138,24 +140,24 @@ export function UploadBox({
         <div
           role="button"
           tabIndex={0}
-          aria-disabled={isUploading}
+          aria-disabled={isUploading || disabled}
           aria-describedby={error ? "resume-upload-error" : undefined}
           onClick={() => {
-            if (!isUploading) {
+            if (!isUploading && !disabled) {
               inputRef.current?.click();
             }
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
-              if (!isUploading) {
+              if (!isUploading && !disabled) {
                 inputRef.current?.click();
               }
             }
           }}
           onDragOver={(event) => {
             event.preventDefault();
-            if (!isUploading) {
+            if (!isUploading && !disabled) {
               setIsDragging(true);
             }
           }}
@@ -172,7 +174,7 @@ export function UploadBox({
             type="file"
             accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             className="hidden"
-            disabled={isUploading}
+            disabled={isUploading || disabled}
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];
               if (file) {

@@ -259,6 +259,35 @@ export default function AnalyzePage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      const prefill = window.sessionStorage.getItem("resufit:compare-prefill");
+      if (prefill) {
+        window.sessionStorage.removeItem("resufit:compare-prefill");
+        try {
+          const value: unknown = JSON.parse(prefill);
+          if (
+            typeof value === "object" &&
+            value !== null &&
+            "fileName" in value &&
+            typeof value.fileName === "string" &&
+            "resumeText" in value &&
+            typeof value.resumeText === "string" &&
+            "jobText" in value &&
+            typeof value.jobText === "string"
+          ) {
+            setResume({
+              fileName: value.fileName,
+              text: value.resumeText,
+              wordCount: value.resumeText.trim().split(/\s+/).filter(Boolean).length,
+            });
+            setJobText(value.jobText);
+            return;
+          }
+          setError("The saved comparison could not prefill the analysis form.");
+        } catch {
+          setError("The saved comparison could not prefill the analysis form.");
+        }
+      }
+
       if (new URLSearchParams(window.location.search).get("sample") === "1") {
         setResume({
           fileName: "sample-resume.txt",
@@ -920,6 +949,12 @@ export default function AnalyzePage() {
             className="inline-flex rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
           >
             History
+          </Link>
+          <Link
+            href="/compare"
+            className="inline-flex rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            Compare jobs
           </Link>
         </header>
 

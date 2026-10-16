@@ -25,6 +25,19 @@ test("empty analyze page has no serious or critical accessibility violations", a
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("empty compare page has no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/compare");
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
+test("comparison results have no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/compare");
+  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Comparison results" })).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("analysis results have no serious or critical accessibility violations", async ({ page }) => {
   await completeSampleAnalysis(page);
   await expectNoSeriousAccessibilityViolations(page);

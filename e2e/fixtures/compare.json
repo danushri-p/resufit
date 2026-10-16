@@ -1,0 +1,82 @@
+{
+  "resume": {
+    "name": "Alex Kumar",
+    "email": "alex.kumar@example.com",
+    "summary": "Computer science student interested in building useful, accessible web applications.",
+    "skills": ["JavaScript", "TypeScript", "React", "Node.js", "Express", "PostgreSQL", "MongoDB"],
+    "experience": [],
+    "projects": [],
+    "education": [],
+    "certifications": []
+  },
+  "jobs": [
+    {
+      "index": 0,
+      "job": {
+        "jobTitle": "Frontend Developer",
+        "company": "Fictional BrightPath Studio",
+        "mustHaveSkills": ["React", "TypeScript", "CSS"],
+        "niceToHaveSkills": ["Next.js"],
+        "yearsOfExperience": null,
+        "responsibilities": [],
+        "keywords": []
+      },
+      "match": {
+        "score": 72,
+        "label": "Good match",
+        "matchedMustHave": ["React", "TypeScript"],
+        "missingMustHave": ["CSS"],
+        "matchedNiceToHave": [],
+        "missingNiceToHave": ["Next.js"],
+        "suggestions": [],
+        "ats": {
+          "score": 75,
+          "checks": [
+            {"id": "keywords", "label": "Job keywords", "status": "warn", "detail": "Some keywords are missing."}
+          ]
+        }
+      },
+      "atsKeywordCoverage": 60
+    },
+    {
+      "index": 1,
+      "job": {
+        "jobTitle": "Backend Developer Intern",
+        "company": "Fictional Harborlight Systems",
+        "mustHaveSkills": ["Node.js", "Express", "PostgreSQL"],
+        "niceToHaveSkills": ["Git"],
+        "yearsOfExperience": null,
+        "responsibilities": [],
+        "keywords": []
+      },
+      "match": {
+        "score": 88,
+        "label": "Strong match",
+        "matchedMustHave": ["Node.js", "Express", "PostgreSQL"],
+        "missingMustHave": [],
+        "matchedNiceToHave": ["Git"],
+        "missingNiceToHave": [],
+        "suggestions": [],
+        "ats": {
+          "score": 90,
+          "checks": [
+            {"id": "keywords", "label": "Job keywords", "status": "pass", "detail": "All keywords are present."}
+          ]
+        }
+      },
+      "atsKeywordCoverage": 100
+    }
+  ],
+  "skillGaps": [
+    {
+      "skill": "TypeScript",
+      "missingIn": 2,
+      "jobTitles": ["Frontend Developer", "Backend Developer Intern"]
+    },
+    {
+      "skill": "CSS",
+      "missingIn": 1,
+      "jobTitles": ["Frontend Developer"]
+    }
+  ]
+}

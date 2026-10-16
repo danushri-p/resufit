@@ -24,7 +24,11 @@ export function getTextLimitError(
 }
 
 // In-memory limits reset per serverless instance and are a basic safeguard only.
-export function consumeAIRequest(ip: string, now = Date.now()): boolean {
+export function consumeAIRequest(
+  ip: string,
+  now = Date.now(),
+  amount = 1,
+): boolean {
   for (const [key, entry] of requestsByIp) {
     if (entry.resetAt <= now) {
       requestsByIp.delete(key);
@@ -40,11 +44,11 @@ export function consumeAIRequest(ip: string, now = Date.now()): boolean {
     return true;
   }
 
-  if (entry.count >= AI_REQUESTS_PER_MINUTE) {
+  if (amount < 1 || entry.count + amount > AI_REQUESTS_PER_MINUTE) {
     return false;
   }
 
-  entry.count += 1;
+  entry.count += amount;
   return true;
 }
 

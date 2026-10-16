@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { AnalysisCards } from "@/components/results/AnalysisCards";
+import { ComparisonResults } from "@/components/compare/ComparisonResults";
 import { Button } from "@/components/ui/button";
 import {
   clearHistory,
@@ -71,6 +72,12 @@ export default function HistoryPage() {
           >
             Analyze a resume
           </Link>
+          <Link
+            href="/compare"
+            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            Compare jobs
+          </Link>
         </header>
 
         {isLoading ? (
@@ -87,14 +94,18 @@ export default function HistoryPage() {
                 Back to history
               </Button>
             </div>
-            <AnalysisCards
-              resume={selectedEntry.result.resume}
-              job={selectedEntry.result.job}
-              match={selectedEntry.result.match}
-              rewrites={selectedEntry.result.rewrites}
-              coverLetter={selectedEntry.result.coverLetter}
-              interviewPrep={selectedEntry.result.interviewPrep}
-            />
+            {"type" in selectedEntry ? (
+              <ComparisonResults result={selectedEntry.comparison} />
+            ) : (
+              <AnalysisCards
+                resume={selectedEntry.result.resume}
+                job={selectedEntry.result.job}
+                match={selectedEntry.result.match}
+                rewrites={selectedEntry.result.rewrites}
+                coverLetter={selectedEntry.result.coverLetter}
+                interviewPrep={selectedEntry.result.interviewPrep}
+              />
+            )}
           </div>
         ) : entries.length === 0 ? (
           <div className="rounded-xl bg-white p-8 text-center ring-1 ring-foreground/10">
@@ -132,10 +143,17 @@ export default function HistoryPage() {
                 <li key={entry.id} className="rounded-xl bg-white p-5 ring-1 ring-foreground/10">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0 space-y-1">
-                      <h2 className="break-words text-lg font-medium text-stone-900">
-                        {entry.jobTitle}
-                        {entry.company ? ` · ${entry.company}` : ""}
-                      </h2>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="break-words text-lg font-medium text-stone-900">
+                          {entry.jobTitle}
+                          {entry.company ? ` · ${entry.company}` : ""}
+                        </h2>
+                        {"type" in entry && (
+                          <span className="rounded-full bg-cyan-100 px-2 py-1 text-xs font-semibold text-cyan-950">
+                            Comparison
+                          </span>
+                        )}
+                      </div>
                       <p className="break-words text-sm text-stone-600">
                         {entry.fileName} · {formatDate(entry.createdAt)}
                       </p>

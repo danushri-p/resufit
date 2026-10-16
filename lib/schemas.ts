@@ -114,6 +114,30 @@ export const MatchResultSchema = z.object({
   }),
 });
 
+export const JobComparisonSchema = z.object({
+  index: z.number().int().min(0).max(2),
+  job: JobRequirementsSchema.optional(),
+  match: MatchResultSchema.optional(),
+  atsKeywordCoverage: z.number().int().min(0).max(100).optional(),
+  error: z.string().optional(),
+});
+
+export const SkillGapSchema = z.object({
+  skill: z.string(),
+  missingIn: z.number().int().min(1).max(3),
+  jobTitles: z.array(z.string()),
+});
+
+export const CompareResultSchema = z.object({
+  resume: ResumeSchema,
+  jobs: z.array(JobComparisonSchema).min(2).max(3),
+  skillGaps: z.array(SkillGapSchema),
+});
+
+export type JobComparison = z.infer<typeof JobComparisonSchema>;
+export type SkillGap = z.infer<typeof SkillGapSchema>;
+export type CompareResult = z.infer<typeof CompareResultSchema>;
+
 export type Resume = z.infer<typeof ResumeSchema>;
 export type JobRequirements = z.infer<typeof JobRequirementsSchema>;
 export type MatchResult = z.infer<typeof MatchResultSchema>;

@@ -46,6 +46,41 @@ function resumeContainsKeyword(resumeText: string, keyword: string): boolean {
   return false;
 }
 
+function getKeywordAssessment(
+  resumeText: string,
+  job: JobRequirements,
+): { coverage: number; missingKeywords: string[] } {
+  const jobTitle = job.jobTitle ? normalizeSkill(job.jobTitle) : "";
+  const seenKeywords = new Set<string>();
+  const keywords = [...job.mustHaveSkills, ...job.niceToHaveSkills].filter(
+    (keyword) => {
+      const normalized = normalizeSkill(keyword);
+      if (!normalized || normalized === jobTitle || seenKeywords.has(normalized)) {
+        return false;
+      }
+      seenKeywords.add(normalized);
+      return true;
+    },
+  );
+  const missingKeywords = keywords.filter(
+    (keyword) => !resumeContainsKeyword(resumeText, keyword),
+  );
+  return {
+    coverage:
+      keywords.length === 0
+        ? 1
+        : (keywords.length - missingKeywords.length) / keywords.length,
+    missingKeywords,
+  };
+}
+
+export function getAtsKeywordCoverage(
+  resumeText: string,
+  job: JobRequirements,
+): number {
+  return Math.round(getKeywordAssessment(resumeText, job).coverage * 100);
+}
+
 function checkDetails(status: AtsCheck["status"], pass: string, warn: string, fail: string) {
   if (status === "pass") return pass;
   if (status === "warn") return warn;
@@ -94,24 +129,10 @@ export function runAtsChecks({
         ? "warn"
         : "fail";
 
-  const jobTitle = job.jobTitle ? normalizeSkill(job.jobTitle) : "";
-  const seenKeywords = new Set<string>();
-  const keywords = [
-    ...job.mustHaveSkills,
-    ...job.niceToHaveSkills,
-  ].filter((keyword) => {
-    const normalized = normalizeSkill(keyword);
-    if (!normalized || normalized === jobTitle || seenKeywords.has(normalized)) {
-      return false;
-    }
-    seenKeywords.add(normalized);
-    return true;
-  });
-  const missingKeywords = keywords.filter(
-    (keyword) => !resumeContainsKeyword(resumeText, keyword),
+  const { coverage: keywordShare, missingKeywords } = getKeywordAssessment(
+    resumeText,
+    job,
   );
-  const keywordShare =
-    keywords.length === 0 ? 1 : (keywords.length - missingKeywords.length) / keywords.length;
   const keywordStatus = statusForShare(keywordShare);
 
   const bullets = [
