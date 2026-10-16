@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { UploadBox, type ResumeUploadResult } from "@/components/UploadBox";
 import { AnalysisCards } from "@/components/results/AnalysisCards";
 import { Button } from "@/components/ui/button";
@@ -757,13 +758,18 @@ export default function AnalyzePage() {
   return (
     <main className="min-h-screen bg-stone-50 px-6 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
-            Analyze your resume
-          </h1>
-          <p className="text-stone-600">
-            Upload your resume and add the job description you have in mind.
-          </p>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <Link href="/" aria-label="ResuFit" className="inline-flex">
+              <Logo />
+            </Link>
+            <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
+              Analyze your resume
+            </h1>
+            <p className="text-stone-600">
+              Upload your resume and add the job description you have in mind.
+            </p>
+          </div>
           <Link
             href="/history"
             className="inline-flex rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"

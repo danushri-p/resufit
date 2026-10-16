@@ -1,3 +1,5 @@
+<img src="public/logo.svg" width="72" alt="ResuFit logo">
+
 # ResuFit
 
 ResuFit compares a resume with a job description and gives an honest match score, ATS checks, suggestions, and bullet rewrites.

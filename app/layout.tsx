@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://resufit-one.vercel.app"),
   title: {
     default: "ResuFit – AI resume analyzer",
     template: "%s | ResuFit",
