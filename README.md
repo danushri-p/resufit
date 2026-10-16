@@ -18,6 +18,7 @@ Add screenshots at:
 - Compare resume skills and experience against a job with a deterministic match score.
 - Review tailored suggestions and ATS checks.
 - Rewrite project bullets with checks against unsupported facts and technologies.
+- Generate a tailored, editable cover letter using only resume facts.
 - Download a Markdown report.
 - Keep up to ten recent analyses in browser-local history.
 
@@ -40,6 +41,7 @@ Next.js, TypeScript, Tailwind CSS, Zod, Vitest, Ollama or Google Gemini, `pdf-pa
 - **Number guard:** rejects rewrite metrics/numbers that are not supported by the original bullet.
 - **Missing-skill guard:** rejects rewrites and suggestions that claim a skill listed as missing, except when a rewrite retains a claim already present in its original bullet.
 - **Technology guard:** limits rewritten technologies to those already named in the bullet or project tech stack.
+- **Cover-letter guard:** checks unsupported numbers, missing skills, and project/company names; inaccurate paragraphs are retried or removed.
 - **Deterministic results:** match score and ATS checks are rule-based and do not use AI.
 
 ## Run locally
@@ -51,7 +53,7 @@ ollama run llama3.2
 npm run dev
 ```
 
-For Gemini, create a key in [Google AI Studio](https://aistudio.google.com/apikey) and set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`. The default model is `gemini-2.5-flash`; if it is rate limited, ResuFit tries the configured fallback models (default: `gemini-2.5-flash-lite`).
+For Gemini, create a key in [Google AI Studio](https://aistudio.google.com/apikey) and set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`. The default model is `gemini-2.5-flash`; if it is rate limited, ResuFit tries the configured fallback models (default: `gemini-flash-lite-latest,gemini-3.5-flash-lite`). Google retires model names over time, so the `-latest` alias is used for the fallback.
 
 Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` to `.env.local` to customize settings.
 
@@ -64,7 +66,7 @@ Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` to `.en
 | `OLLAMA_MODEL` | `llama3.2` | Local Ollama model. |
 | `GEMINI_API_KEY` | *(empty)* | Required when using Gemini; keep secret. |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model. |
-| `GEMINI_FALLBACK_MODELS` | `gemini-2.5-flash-lite` | Comma-separated Gemini models tried when the primary model hits a rate limit. |
+| `GEMINI_FALLBACK_MODELS` | `gemini-flash-lite-latest,gemini-3.5-flash-lite` | Comma-separated Gemini models tried when the primary model hits a rate limit; Google retires model names over time, so the `-latest` alias is included. |
 | `NEXT_PUBLIC_AI_PROVIDER_LABEL` | `Ollama (local)` | Non-secret provider label shown in the footer. |
 
 ## Tests
@@ -79,12 +81,13 @@ The test suite mocks AI network requests. CI runs these checks on Node.js 22.
 
 ## Deploy to Vercel
 
-Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `GEMINI_FALLBACK_MODELS` and `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Analyze normally uses 2 Gemini requests (one combined resume/job extraction and one suggestions request); Improve bullets normally uses 1. A rate-limit fallback can add model requests. Never expose the API key with a `NEXT_PUBLIC_` prefix.
+Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `GEMINI_FALLBACK_MODELS` and `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Analyze normally uses 2 Gemini requests (one combined resume/job extraction and one suggestions request); Improve bullets and Write cover letter normally use 1 each. A rate-limit fallback can add model requests. Never expose the API key with a `NEXT_PUBLIC_` prefix.
 
 ## Limitations
 
 - The free Gemini tier has rate limits per Google project. Fallback models have their own model quotas, but all models still share the project's overall limits. Use different keys/projects for local testing and the live site if both are used heavily.
 - Analyze normally uses 2 Gemini requests (combined resume/job extraction and suggestions); Improve bullets normally uses 1. A rate-limit fallback can add model requests. ResuFit caches successful AI results in memory for up to one hour per serverless instance, so cache hits are not shared between instances.
+- Write cover letter normally uses 1 AI request, or 0 when the result is cached. Google retires model names over time, so the configured fallback includes the `gemini-flash-lite-latest` alias.
 - The app also uses a basic in-memory per-IP request limit.
 - Small local models may be less accurate than hosted models.
 - Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
@@ -99,5 +102,5 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 5:** Add ATS checks and browser-local history.
 - **Day 6:** Add Gemini, deployment configuration, and public-site safeguards.
 - **Day 7:** Polish sample flow, landing page, error states, metadata, and CI.
-
+- **Day 8:** Add honest, tailored cover letter generation.
 

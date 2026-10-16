@@ -70,6 +70,12 @@ export const BulletRewritesSchema = z.object({
   ),
 });
 
+export const CoverLetterSchema = z.object({
+  greeting: z.string(),
+  paragraphs: z.array(z.string()).min(3).max(4),
+  closing: z.string(),
+});
+
 export const MatchResultSchema = z.object({
   score: z.number().int().min(0).max(100),
   label: z.enum(["Strong match", "Good match", "Partial match", "Weak match"]),
@@ -97,6 +103,7 @@ export type MatchResult = z.infer<typeof MatchResultSchema>;
 export type BulletRewrite = z.infer<
   typeof BulletRewritesSchema
 >["rewrites"][number];
+export type CoverLetter = z.infer<typeof CoverLetterSchema>;
 export interface ProjectBulletRewrites {
   projectName: string;
   rewrites: BulletRewrite[];
@@ -108,4 +115,5 @@ export type AnalysisResult = {
   match: MatchResult;
   ats: AtsResult;
   rewrites?: ProjectBulletRewrites[];
+  coverLetter?: string;
 };

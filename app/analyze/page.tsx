@@ -29,7 +29,8 @@ import { readApiResponse } from "@/lib/apiResponse";
 import { sampleJobDescription, sampleResumeText } from "@/lib/samples";
 
 const MIN_JOB_TEXT_LENGTH = 50;
-type RateLimitedAction = "analyze" | "rewrite";
+type RateLimitedAction = "analyze" | "rewrite" | "cover-letter";
+type CoverLetterTone = "professional" | "friendly";
 
 interface ExtractionResult {
   resume: Resume;
@@ -197,6 +198,12 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<ExtractionResult>();
   const [match, setMatch] = useState<MatchAnalysisResponse>();
   const [rewrites, setRewrites] = useState<ProjectBulletRewrites[]>();
+  const [coverLetter, setCoverLetter] = useState("");
+  const [coverLetterWarnings, setCoverLetterWarnings] = useState<string[]>([]);
+  const [coverLetterTone, setCoverLetterTone] =
+    useState<CoverLetterTone>("professional");
+  const [isWritingCoverLetter, setIsWritingCoverLetter] = useState(false);
+  const [coverLetterError, setCoverLetterError] = useState<string>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
@@ -213,9 +220,11 @@ export default function AnalyzePage() {
   const copyTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const analysisRequestId = useRef(0);
   const rewriteRequestId = useRef(0);
+  const coverLetterRequestId = useRef(0);
   const historyId = useRef<string | undefined>(undefined);
   const resultsHeading = useRef<HTMLHeadingElement>(null);
-  const isBusy = isUploading || isAnalyzing || isMatching || isRewriting;
+  const isBusy =
+    isUploading || isAnalyzing || isMatching || isRewriting || isWritingCoverLetter;
   const isRetryCooldownActive = retryCountdown > 0;
 
   const canAnalyze =
@@ -322,6 +331,8 @@ export default function AnalyzePage() {
           ...extracted,
           match: parsedMatch,
           ats: parsedMatch.ats,
+          rewrites,
+          coverLetter: coverLetter || undefined,
         },
       });
       historyId.current = savedHistoryId;
@@ -353,8 +364,10 @@ export default function AnalyzePage() {
             if (action === "analyze") {
               if (result) void handleRetrySuggestions();
               else void handleAnalyze();
-            } else {
+            } else if (action === "rewrite") {
               void handleRewriteBullets();
+            } else {
+              void handleWriteCoverLetter(true);
             }
           }}
         >
@@ -372,10 +385,14 @@ export default function AnalyzePage() {
   function handleResumeExtracted(upload: ResumeUploadResult) {
     analysisRequestId.current += 1;
     rewriteRequestId.current += 1;
+    coverLetterRequestId.current += 1;
     setResume(upload);
     setResult(undefined);
     setMatch(undefined);
     setRewrites(undefined);
+    setCoverLetter("");
+    setCoverLetterWarnings([]);
+    setCoverLetterError(undefined);
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
@@ -384,17 +401,22 @@ export default function AnalyzePage() {
     setIsAnalyzing(false);
     setIsMatching(false);
     setIsRewriting(false);
+    setIsWritingCoverLetter(false);
     historyId.current = undefined;
   }
 
   function handleStartOver() {
     analysisRequestId.current += 1;
     rewriteRequestId.current += 1;
+    coverLetterRequestId.current += 1;
     setResume(undefined);
     setJobText("");
     setResult(undefined);
     setMatch(undefined);
     setRewrites(undefined);
+    setCoverLetter("");
+    setCoverLetterWarnings([]);
+    setCoverLetterError(undefined);
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
@@ -403,6 +425,7 @@ export default function AnalyzePage() {
     setIsAnalyzing(false);
     setIsMatching(false);
     setIsRewriting(false);
+    setIsWritingCoverLetter(false);
     setCopiedBullet(undefined);
     setUploadBoxKey((key) => key + 1);
     historyId.current = undefined;
@@ -425,14 +448,19 @@ export default function AnalyzePage() {
     clearRateLimitCooldown();
     const requestId = ++analysisRequestId.current;
     rewriteRequestId.current += 1;
+    coverLetterRequestId.current += 1;
     setIsAnalyzing(true);
     setResult(undefined);
     setMatch(undefined);
     setRewrites(undefined);
+    setCoverLetter("");
+    setCoverLetterWarnings([]);
+    setCoverLetterError(undefined);
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
     setIsRewriting(false);
+    setIsWritingCoverLetter(false);
 
     try {
       const response = await fetch("/api/extract", {
@@ -543,6 +571,7 @@ export default function AnalyzePage() {
           match,
           ats: match.ats,
           rewrites: parsedRewrites,
+          coverLetter: coverLetter || undefined,
         });
       }
     } catch (rewriteFailure) {
@@ -557,6 +586,117 @@ export default function AnalyzePage() {
         setIsRewriting(false);
       }
     }
+  }
+
+  async function handleWriteCoverLetter(retrying = false) {
+    if (
+      !result ||
+      !match ||
+      !resume ||
+      isWritingCoverLetter ||
+      (retryCountdown > 0 && !retrying)
+    ) {
+      return;
+    }
+
+    clearRateLimitCooldown();
+    const requestId = ++coverLetterRequestId.current;
+    setIsWritingCoverLetter(true);
+    setCoverLetterError(undefined);
+
+    try {
+      const response = await fetch("/api/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resume: result.resume,
+          job: result.job,
+          match,
+          tone: coverLetterTone,
+        }),
+      });
+      const payload = await readApiResponse(response);
+      if (requestId !== coverLetterRequestId.current) return;
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          startRateLimitCooldown(
+            "cover-letter",
+            getRetryAfterSeconds(payload),
+          );
+        }
+        throw new Error(
+          getApiError(payload) ?? "Could not write the cover letter.",
+        );
+      }
+
+      if (
+        typeof payload !== "object" ||
+        payload === null ||
+        !("letter" in payload) ||
+        typeof payload.letter !== "string" ||
+        !("warnings" in payload) ||
+        !Array.isArray(payload.warnings) ||
+        !payload.warnings.every((warning) => typeof warning === "string")
+      ) {
+        throw new Error("The server returned a cover letter in an unexpected format.");
+      }
+
+      setCoverLetter(payload.letter);
+      setCoverLetterWarnings(payload.warnings);
+      if (historyId.current) {
+        updateHistoryEntry(historyId.current, {
+          ...result,
+          match,
+          ats: match.ats,
+          rewrites,
+          coverLetter: payload.letter,
+        });
+      }
+    } catch (failure) {
+      if (requestId !== coverLetterRequestId.current) return;
+      setCoverLetterError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not write the cover letter. Please try again.",
+      );
+    } finally {
+      if (requestId === coverLetterRequestId.current) {
+        setIsWritingCoverLetter(false);
+      }
+    }
+  }
+
+  function updateCoverLetter(value: string) {
+    setCoverLetter(value);
+    if (historyId.current && result && match) {
+      updateHistoryEntry(historyId.current, {
+        ...result,
+        match,
+        ats: match.ats,
+        rewrites,
+        coverLetter: value,
+      });
+    }
+  }
+
+  async function copyCoverLetter() {
+    try {
+      await navigator.clipboard.writeText(coverLetter);
+      setCoverLetterError(undefined);
+    } catch {
+      setCoverLetterError("Could not copy the cover letter to the clipboard.");
+    }
+  }
+
+  function downloadCoverLetter() {
+    const blob = new Blob([coverLetter], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "resufit-cover-letter.txt";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   async function copyBullet(id: string, content: string) {
@@ -581,6 +721,7 @@ export default function AnalyzePage() {
       job: result.job,
       match,
       rewrites,
+      coverLetter: coverLetter || undefined,
     });
     const jobSlug =
       (result.job.jobTitle ?? "job")
@@ -695,13 +836,18 @@ export default function AnalyzePage() {
               onChange={(event) => {
                 analysisRequestId.current += 1;
                 rewriteRequestId.current += 1;
+                coverLetterRequestId.current += 1;
                 setJobText(event.target.value);
                 setResult(undefined);
                 setMatch(undefined);
                 setRewrites(undefined);
+                setCoverLetter("");
+                setCoverLetterWarnings([]);
+                setCoverLetterError(undefined);
                 setIsAnalyzing(false);
                 setIsMatching(false);
                 setIsRewriting(false);
+                setIsWritingCoverLetter(false);
                 setError(undefined);
                 setMatchError(undefined);
                 setRewriteError(undefined);
@@ -778,6 +924,110 @@ export default function AnalyzePage() {
               onDownload={downloadReport}
               onCopy={(id, content) => void copyBullet(id, content)}
             />
+            <Card>
+              <CardHeader>
+                <CardTitle>Cover letter</CardTitle>
+                <CardDescription>
+                  Create a tailored letter grounded in your resume.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <label className="grid max-w-xs gap-2 text-sm font-medium text-stone-800">
+                  Tone
+                  <select
+                    className="h-10 rounded-lg border border-input bg-white px-3"
+                    value={coverLetterTone}
+                    disabled={isWritingCoverLetter}
+                    onChange={(event) =>
+                      setCoverLetterTone(event.target.value as CoverLetterTone)
+                    }
+                  >
+                    <option value="professional">Professional</option>
+                    <option value="friendly">Friendly</option>
+                  </select>
+                </label>
+                {!coverLetter && (
+                  <Button
+                    type="button"
+                    disabled={isBusy || retryCountdown > 0}
+                    onClick={() => void handleWriteCoverLetter()}
+                  >
+                    {isWritingCoverLetter
+                      ? "Writing cover letter…"
+                      : "Write cover letter"}
+                  </Button>
+                )}
+                {isWritingCoverLetter && (
+                  <p className="text-sm text-indigo-700" role="status">
+                    Writing a cover letter based on your resume…
+                  </p>
+                )}
+                {coverLetterError && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-red-700" role="alert">
+                      {coverLetterError}
+                    </p>
+                    {rateLimitRetryButton("cover-letter")}
+                  </div>
+                )}
+                {coverLetterWarnings.length > 0 && (
+                  <div className="rounded-md bg-stone-100 p-3 text-sm text-stone-700" role="status">
+                    <p className="font-medium">Accuracy notes</p>
+                    <ul className="mt-1 list-disc pl-5">
+                      {coverLetterWarnings.map((warning, index) => (
+                        <li key={`${warning}-${index}`}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {coverLetter && (
+                  <>
+                    <Textarea
+                      aria-label="Editable cover letter"
+                      value={coverLetter}
+                      rows={14}
+                      disabled={isWritingCoverLetter}
+                      onChange={(event) => updateCoverLetter(event.target.value)}
+                    />
+                    <p className="text-sm text-stone-600" aria-live="polite">
+                      {coverLetter.trim()
+                        ? coverLetter.trim().split(/\s+/).length
+                        : 0}{" "}
+                      words
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isWritingCoverLetter}
+                        onClick={() => void copyCoverLetter()}
+                      >
+                        Copy
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isWritingCoverLetter}
+                        onClick={downloadCoverLetter}
+                      >
+                        Download .txt
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isBusy || retryCountdown > 0}
+                        onClick={() => void handleWriteCoverLetter()}
+                      >
+                        Regenerate
+                      </Button>
+                    </div>
+                    <p className="text-sm text-stone-600">
+                      Review and personalise before sending. ResuFit only uses facts from your resume.
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </section>
         )}
 

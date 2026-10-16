@@ -20,6 +20,7 @@ interface AnalysisCardsProps {
   job: JobRequirements;
   match: MatchResult;
   rewrites?: ProjectBulletRewrites[];
+  coverLetter?: string;
   isMatching?: boolean;
   isRewriting?: boolean;
   retryCountdown?: number;
@@ -65,6 +66,7 @@ export function AnalysisCards({
   job,
   match,
   rewrites,
+  coverLetter,
   isMatching = false,
   isRewriting = false,
   retryCountdown = 0,
@@ -249,6 +251,19 @@ export function AnalysisCards({
           </section>) : <p className="text-sm text-stone-500">No project bullets are available to improve.</p>}
         </CardContent>
       </Card>}
+      {coverLetter && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cover letter</CardTitle>
+            <CardDescription>Saved with this analysis.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-wrap text-sm leading-6 text-stone-700">
+              {coverLetter}
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </section>
   );
 }

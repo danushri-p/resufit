@@ -26,6 +26,7 @@ const analysisResultSchema = z.object({
       ),
     }),
   ).optional(),
+  coverLetter: z.string().optional(),
 });
 
 export const HistoryEntrySchema = z.object({

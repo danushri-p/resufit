@@ -16,14 +16,15 @@ export function containsUnsupportedNumbers(
 
   const resumeNumbers = new Set(
     resumeText.match(/\d+(?:[.,]\d+)*(?:\+)?/g)?.map((number) =>
-      number.replace(/,/g, ""),
+      number.replace(/,/g, "").replace(/\+$/, ""),
     ) ?? [],
   );
   const suggestionNumbers =
     content.match(/\d+(?:[.,]\d+)*(?:\+)?/g) ?? [];
 
   return suggestionNumbers.some(
-    (number) => !resumeNumbers.has(number.replace(/,/g, "")),
+    (number) =>
+      !resumeNumbers.has(number.replace(/,/g, "").replace(/\+$/, "")),
   );
 }
 
@@ -46,7 +47,7 @@ export function mentionsMissingSkill(content: string, missingSkills: string[]): 
 }
 
 export function containsLearningPhrase(content: string): boolean {
-  return /\b(?:learn|build a|practice|course|tutorial|side project)\b/i.test(
+  return /\b(?:learn(?:ing)?|build a|practice|course|tutorial|side project)\b/i.test(
     content,
   );
 }

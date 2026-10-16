@@ -32,3 +32,11 @@ Never mention JSON, fields, null, empty sections, or "the candidate". Return a s
 export const BULLET_REWRITE_PROMPT = `Rewrite each resume project bullet to better match the job.
 
 Keep the same meaning and facts. Preserve every feature, item, and number from the original bullet: you may reword and reorder them, but never drop any part. Use only technologies listed for that project. Never add numbers, results, or tools that are not in the original bullet. Use "[X%]" if a metric would help. Keep each bullet under 25 words. Start with a strong action verb. Give one short sentence for each reason.`;
+
+export const COVER_LETTER_PROMPT = `Write a tailored cover letter from the supplied resume and job context.
+
+Write to the hiring team for the given job title and company. If no company is provided, use "Dear Hiring Team". Write 220–320 words in first person, in a plain professional tone. Avoid clichés such as "I am writing to express my interest", "passionate", and "synergy".
+
+The first paragraph should name the role and give a one-line fit. Use paragraphs 2 and 3 to connect 2–3 real projects or experience entries from the resume to the job's must-have skills, using only facts in the resume. The final paragraph should be a short, confident close. Return 3–4 paragraphs in total.
+
+Never claim missing skills, certifications, years of experience, or numbers that are not in the resume. If a must-have skill is missing, either do not mention it or say you are learning it. Never invent project or company names. Never invent company facts beyond the job description.`;

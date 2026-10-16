@@ -11,6 +11,7 @@ interface MarkdownReportOptions {
   job: JobRequirements;
   match: MatchResult;
   rewrites?: ProjectBulletRewrites[];
+  coverLetter?: string;
 }
 
 function skillList(skills: string[]): string {
@@ -23,6 +24,7 @@ export function buildMarkdownReport({
   job,
   match,
   rewrites,
+  coverLetter,
 }: MarkdownReportOptions): string {
   const jobTitle = job.jobTitle?.trim() || "Job match report";
   const suggestions = match.suggestions.length > 0
@@ -41,6 +43,9 @@ export function buildMarkdownReport({
           ),
         ]),
       ].join("\n\n")
+    : "";
+  const coverLetterSection = coverLetter?.trim()
+    ? `## Cover letter\n\n${coverLetter.trim()}`
     : "";
 
   return [
@@ -68,6 +73,7 @@ export function buildMarkdownReport({
     "## Suggestions",
     suggestions,
     improvedBullets,
+    coverLetterSection,
   ]
     .filter(Boolean)
     .join("\n\n");
