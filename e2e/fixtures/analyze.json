@@ -1,0 +1,35 @@
+{
+  "score": 82,
+  "label": "Good match",
+  "matchedMustHave": ["React", "TypeScript", "REST APIs", "Node.js", "PostgreSQL"],
+  "missingMustHave": [],
+  "matchedNiceToHave": ["Git", "HTML", "CSS"],
+  "missingNiceToHave": [],
+  "suggestions": [
+    {
+      "title": "Highlight API development",
+      "detail": "Connect the CampusConnect REST endpoints to the role's server-side responsibilities."
+    },
+    {
+      "title": "Emphasize accessibility",
+      "detail": "Bring forward your interest in accessible design and usable mobile interfaces."
+    }
+  ],
+  "ats": {
+    "score": 88,
+    "checks": [
+      {
+        "id": "contact",
+        "label": "Contact information",
+        "status": "pass",
+        "detail": "Email address found."
+      },
+      {
+        "id": "sections",
+        "label": "Resume sections",
+        "status": "pass",
+        "detail": "Skills, projects, and education sections found."
+      }
+    ]
+  }
+}

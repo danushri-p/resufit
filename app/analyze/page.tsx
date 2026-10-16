@@ -815,8 +815,9 @@ export default function AnalyzePage() {
           </CardHeader>
           <CardContent>
             <pre
+              tabIndex={0}
               aria-live="polite"
-              className="max-h-80 min-h-40 overflow-y-auto break-words whitespace-pre-wrap rounded-md bg-stone-100 p-4 font-sans text-sm leading-6 text-stone-800"
+              className="max-h-80 min-h-40 overflow-y-auto break-words whitespace-pre-wrap rounded-md bg-stone-100 p-4 font-sans text-sm leading-6 text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
             >
               {resume?.text ?? "No resume text to preview yet."}
             </pre>

@@ -1,0 +1,66 @@
+{
+  "resume": {
+    "name": "Alex Kumar",
+    "email": "alex.kumar@example.com",
+    "summary": "Computer science student interested in building useful, accessible web applications.",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Next.js",
+      "Node.js",
+      "Express",
+      "PostgreSQL",
+      "MongoDB",
+      "Git",
+      "REST APIs",
+      "HTML",
+      "CSS",
+      "Jest"
+    ],
+    "experience": [],
+    "projects": [
+      {
+        "name": "CampusConnect",
+        "description": "Student event planner for fictional student clubs.",
+        "techStack": ["React", "TypeScript", "Node.js", "Express", "PostgreSQL"],
+        "bullets": [
+          "Created reusable React and TypeScript components for event discovery, filtering, and registration.",
+          "Developed 12 REST endpoints with Node.js and Express to manage events and participant records.",
+          "Integrated PostgreSQL data models and validation for event details, attendance limits, and registration status."
+        ]
+      },
+      {
+        "name": "StudySpace",
+        "description": "Collaborative study-room finder.",
+        "techStack": ["Next.js", "MongoDB"],
+        "bullets": [
+          "Implemented searchable room listings with filters for building, capacity, equipment, and available time.",
+          "Integrated a Next.js interface with MongoDB-backed APIs for room details and saved preferences.",
+          "Developed clear empty, loading, and error states, then tested key flows with Jest and peer feedback."
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "Bachelor of Science in Computer Science",
+        "institution": "Example State University",
+        "year": "Expected 2027"
+      }
+    ],
+    "certifications": []
+  },
+  "job": {
+    "jobTitle": "Full-Stack Developer Intern",
+    "company": "Fictional Northstar Learning Lab",
+    "mustHaveSkills": ["React", "TypeScript", "REST APIs", "Node.js", "PostgreSQL"],
+    "niceToHaveSkills": ["Git", "HTML", "CSS"],
+    "yearsOfExperience": null,
+    "responsibilities": [
+      "Build and maintain user-facing features with React and TypeScript.",
+      "Connect pages to REST APIs and implement server-side functionality with Node.js.",
+      "Work with PostgreSQL and write clear tests."
+    ],
+    "keywords": ["accessibility", "communication", "problem solving"]
+  }
+}
