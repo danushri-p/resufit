@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { getProviderLabel, ProviderFooter } from "@/components/ProviderFooter";
 import type { Metadata } from "next";
 
@@ -15,13 +15,9 @@ export default function Home() {
     <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-900 sm:px-6 sm:py-12">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-16">
         <header className="flex items-center justify-between gap-4">
-          <Image
-            src="/resufit-logo.svg"
-            alt="ResuFit"
-            width={160}
-            height={42}
-            priority
-          />
+          <Link href="/" aria-label="ResuFit" className="min-w-0">
+            <Logo />
+          </Link>
           <Link
             href="/history"
             className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
@@ -31,6 +27,7 @@ export default function Home() {
         </header>
 
         <section className="grid gap-6">
+          <Logo size={56} />
           <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
             Make your next move count.
           </h1>

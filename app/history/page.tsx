@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/Logo";
 import { AnalysisCards } from "@/components/results/AnalysisCards";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +55,9 @@ export default function HistoryPage() {
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
+            <Link href="/" aria-label="ResuFit" className="mb-2 inline-flex">
+              <Logo />
+            </Link>
             <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
               Analysis history
             </h1>
