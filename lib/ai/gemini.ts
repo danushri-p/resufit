@@ -36,6 +36,7 @@ interface ExhaustedGeminiModel {
   expiresAt: number;
   rateLimit: GeminiRateLimit;
   unavailable?: boolean;
+  busy?: boolean;
 }
 
 const exhaustedModels = new Map<string, ExhaustedGeminiModel>();
@@ -186,6 +187,13 @@ function allModelsExhausted(models: string[]): AIRequestError {
     );
   }
 
+  if (active.some((entry) => entry.exhaustion.busy)) {
+    return new AIRequestError(
+      503,
+      "The AI service is busy right now. Please try again in a moment.",
+    );
+  }
+
   if (unavailable.length === active.length) {
     return new AIRequestError(
       404,
@@ -270,7 +278,7 @@ export async function generateWithGemini<T>({
   };
 
   const models = Array.from(new Set([getGeminiModel(), ...getFallbackModels()]));
-  for (const model of models) {
+  for (const [index, model] of models.entries()) {
     if (getActiveExhaustion(model)) continue;
 
     const response = await request(model, true);
@@ -291,6 +299,28 @@ export async function generateWithGemini<T>({
         model,
         reason: "model unavailable",
       });
+      continue;
+    }
+
+    if ([500, 502, 503, 504].includes(response.status)) {
+      exhaustedModels.set(model, {
+        expiresAt: Date.now() + 60_000,
+        busy: true,
+        rateLimit: {
+          message: "The AI service is temporarily unavailable.",
+          retryAfterSeconds: 60,
+          retryDelay: null,
+          quotaId: null,
+          isPerDay: false,
+        },
+      });
+      console.error("Gemini model temporarily unavailable:", {
+        model,
+        status: response.status,
+      });
+      if (index < models.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
       continue;
     }
 
