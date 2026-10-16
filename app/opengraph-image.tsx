@@ -11,7 +11,7 @@ const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <rect x="0.5" y="0.5" width="119" height="119" rx="28" fill="#0B1020" stroke="#1E293B"/>
   <path d="M36 90 V30 H56 L68 42 V50 Q68 62 56 62 H36" fill="none" stroke="#F8FAFC" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M56 24 L74 42 H62 Q56 42 56 36 Z" fill="#818CF8"/>
-  <polyline points="50,62 62,84 92,48" fill="none" stroke="#34D399" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="50,62 62,84 92,48" fill="none" stroke="#22D3EE" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 const logoDataUrl = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`;
 
@@ -42,7 +42,7 @@ export default function OpenGraphImage() {
               color: "#FFFFFF",
             }}
           >
-            Resu<span style={{ color: "#34D399" }}>Fit</span>
+            Resu<span style={{ color: "#22D3EE" }}>Fit</span>
           </div>
           <div style={{ fontSize: 36, color: "#C7D2FE" }}>
             Honest resume-to-job matching
