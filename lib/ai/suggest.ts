@@ -1,4 +1,5 @@
 import { generateStructured } from "@/lib/ai/client";
+import { cacheAIResult } from "@/lib/ai/cache";
 import { RESUME_SUGGESTIONS_PROMPT } from "@/lib/ai/prompts";
 import {
   SuggestionsSchema,
@@ -113,17 +114,18 @@ export function suggestResumeImprovements(
       })()
     : undefined;
 
-  return generateStructured({
-    prompt: RESUME_SUGGESTIONS_PROMPT,
-    schema: SuggestionsSchema,
-    sourceText: userMessage,
-    userMessage,
-  }).then((result) => ({
-    suggestions: [
-      ...(deterministicSuggestion ? [deterministicSuggestion] : []),
-      ...result.suggestions
-        .filter(
-          (suggestion) => {
+  return cacheAIResult("suggestions-v1", userMessage, async () => {
+    const result = await generateStructured({
+      prompt: RESUME_SUGGESTIONS_PROMPT,
+      schema: SuggestionsSchema,
+      sourceText: userMessage,
+      userMessage,
+    });
+    return {
+      suggestions: [
+        ...(deterministicSuggestion ? [deterministicSuggestion] : []),
+        ...result.suggestions
+          .filter((suggestion) => {
             const duplicatesDeterministicSuggestion =
               deterministicSuggestion &&
               suggestion.title.trim().toLowerCase() ===
@@ -135,9 +137,9 @@ export function suggestResumeImprovements(
                 ...missingNiceToHave,
               ])
             );
-          },
-        )
-        .slice(0, deterministicSuggestion ? 4 : 5),
-    ],
-  }));
+          })
+          .slice(0, deterministicSuggestion ? 4 : 5),
+      ],
+    };
+  });
 }

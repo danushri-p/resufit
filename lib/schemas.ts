@@ -44,6 +44,13 @@ export const JobRequirementsSchema = z.object({
   keywords: z.array(z.string()),
 });
 
+export const ExtractionSchema = z.object({
+  resume: ResumeSchema,
+  job: JobRequirementsSchema,
+});
+
+export type Extraction = z.infer<typeof ExtractionSchema>;
+
 export const SuggestionsSchema = z.object({
   suggestions: z.array(
     z.object({

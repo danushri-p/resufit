@@ -1,4 +1,5 @@
 import { cleanSkillArray, generateStructured } from "@/lib/ai/client";
+import { cacheAIResult } from "@/lib/ai/cache";
 import { RESUME_EXTRACTION_PROMPT } from "@/lib/ai/prompts";
 import { ResumeSchema, type Resume } from "@/lib/schemas";
 
@@ -40,14 +41,13 @@ function resumeContainsExperienceLabel(
   return normalizedResume.includes(` ${normalizedLabel} `);
 }
 
-export function extractResume(resumeText: string): Promise<Resume> {
+export function postProcessResume(
+  resume: Resume,
+  resumeText: string,
+): Resume {
   const resumeLines = resumeText.split(/\r?\n/);
 
-  return generateStructured({
-    prompt: RESUME_EXTRACTION_PROMPT,
-    schema: ResumeSchema,
-    sourceText: resumeText,
-  }).then((resume) => ({
+  return {
     ...resume,
     skills: cleanSkillArray(resume.skills),
     experience: resume.experience.filter(
@@ -74,5 +74,16 @@ export function extractResume(resumeText: string): Promise<Resume> {
           restoreBullet(bullet, resumeLines),
         ),
       })),
-  }));
+  };
+}
+
+export function extractResume(resumeText: string): Promise<Resume> {
+  return cacheAIResult("resume-extraction-v1", resumeText, async () => {
+    const resume = await generateStructured({
+      prompt: RESUME_EXTRACTION_PROMPT,
+      schema: ResumeSchema,
+      sourceText: resumeText,
+    });
+    return postProcessResume(resume, resumeText);
+  });
 }

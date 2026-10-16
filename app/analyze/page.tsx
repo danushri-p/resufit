@@ -38,6 +38,7 @@ interface ExtractionResult {
 
 interface MatchAnalysisResponse extends MatchResult {
   suggestionsError?: string;
+  retryAfterSeconds?: number | null;
 }
 
 function getApiError(value: unknown): string | undefined {
@@ -100,7 +101,11 @@ function parseMatchAnalysis(value: unknown): MatchAnalysisResponse | undefined {
       ? value.suggestionsError
       : undefined;
 
-  return { ...result.data, suggestionsError };
+  return {
+    ...result.data,
+    suggestionsError,
+    retryAfterSeconds: getRetryAfterSeconds(value),
+  };
 }
 
 function parseProjectRewrites(value: unknown): ProjectBulletRewrites[] | undefined {
@@ -262,6 +267,78 @@ export default function AnalyzePage() {
     setRetryCountdown(0);
   }
 
+  async function runMatchAnalysis(
+    extracted: ExtractionResult,
+    uploadedResume: ResumeUploadResult,
+    description: string,
+    requestId: number,
+  ) {
+    setIsMatching(true);
+    try {
+      const matchResponse = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...extracted,
+          resumeText: uploadedResume.text,
+          jobText: description,
+        }),
+      });
+      const matchPayload = await readApiResponse(matchResponse);
+      if (requestId !== analysisRequestId.current) return;
+
+      if (!matchResponse.ok) {
+        if (matchResponse.status === 429) {
+          startRateLimitCooldown(
+            "analyze",
+            getRetryAfterSeconds(matchPayload),
+          );
+        }
+        throw new Error(
+          getApiError(matchPayload) ?? "Could not analyze the resume match.",
+        );
+      }
+
+      const parsedMatch = parseMatchAnalysis(matchPayload);
+      if (!parsedMatch) {
+        throw new Error("The server returned results in an unexpected format.");
+      }
+
+      setMatch(parsedMatch);
+      setMatchError(undefined);
+      if (parsedMatch.suggestionsError) {
+        startRateLimitCooldown(
+          "analyze",
+          parsedMatch.retryAfterSeconds,
+        );
+      }
+      const savedHistoryId = saveHistoryEntry({
+        fileName: uploadedResume.fileName,
+        jobTitle: extracted.job.jobTitle ?? "Untitled job",
+        company: extracted.job.company ?? "",
+        matchScore: parsedMatch.score,
+        atsScore: parsedMatch.ats.score,
+        result: {
+          ...extracted,
+          match: parsedMatch,
+          ats: parsedMatch.ats,
+        },
+      });
+      historyId.current = savedHistoryId;
+    } catch (matchAnalysisError) {
+      if (requestId !== analysisRequestId.current) return;
+      setMatchError(
+        matchAnalysisError instanceof Error
+          ? matchAnalysisError.message
+          : "Could not analyze the resume match. Please try again.",
+      );
+    } finally {
+      if (requestId === analysisRequestId.current) {
+        setIsMatching(false);
+      }
+    }
+  }
+
   function rateLimitRetryButton(action: RateLimitedAction) {
     if (rateLimitedAction !== action) return null;
 
@@ -274,7 +351,8 @@ export default function AnalyzePage() {
           onClick={() => {
             clearRateLimitCooldown();
             if (action === "analyze") {
-              void handleAnalyze();
+              if (result) void handleRetrySuggestions();
+              else void handleAnalyze();
             } else {
               void handleRewriteBullets();
             }
@@ -383,67 +461,13 @@ export default function AnalyzePage() {
       }
 
       setResult(parsedResult);
-      setIsMatching(true);
       setIsAnalyzing(false);
-      try {
-        const matchResponse = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...parsedResult,
-            resumeText: resume.text,
-            jobText: jobText.trim(),
-          }),
-        });
-        const matchPayload = await readApiResponse(matchResponse);
-        if (requestId !== analysisRequestId.current) return;
-
-        if (!matchResponse.ok) {
-          if (matchResponse.status === 429) {
-            startRateLimitCooldown(
-              "analyze",
-              getRetryAfterSeconds(matchPayload),
-            );
-          }
-          throw new Error(
-            getApiError(matchPayload) ?? "Could not analyze the resume match.",
-          );
-        }
-
-        const parsedMatch = parseMatchAnalysis(matchPayload);
-        if (!parsedMatch) {
-          throw new Error("The server returned match results in an unexpected format.");
-        }
-
-        setMatch(parsedMatch);
-        const savedHistoryId = saveHistoryEntry({
-          fileName: resume.fileName,
-          jobTitle: parsedResult.job.jobTitle ?? "Untitled job",
-          company: parsedResult.job.company ?? "",
-          matchScore: parsedMatch.score,
-          atsScore: parsedMatch.ats.score,
-          result: {
-            ...parsedResult,
-            match: parsedMatch,
-            ats: parsedMatch.ats,
-          },
-        });
-        historyId.current = savedHistoryId;
-        if (parsedMatch.suggestionsError) {
-          setMatchError(parsedMatch.suggestionsError);
-        }
-      } catch (matchAnalysisError) {
-        if (requestId !== analysisRequestId.current) return;
-        setMatchError(
-          matchAnalysisError instanceof Error
-            ? matchAnalysisError.message
-            : "Could not analyze the resume match. Please try again.",
-        );
-      } finally {
-        if (requestId === analysisRequestId.current) {
-          setIsMatching(false);
-        }
-      }
+      await runMatchAnalysis(
+        parsedResult,
+        resume,
+        jobText.trim(),
+        requestId,
+      );
     } catch (analyzeError) {
       if (requestId !== analysisRequestId.current) return;
       setError(
@@ -456,6 +480,15 @@ export default function AnalyzePage() {
         setIsAnalyzing(false);
       }
     }
+  }
+
+  async function handleRetrySuggestions() {
+    if (!result || !resume || isMatching || retryCountdown > 0) return;
+
+    clearRateLimitCooldown();
+    const requestId = ++analysisRequestId.current;
+    setMatchError(undefined);
+    await runMatchAnalysis(result, resume, jobText.trim(), requestId);
   }
 
   async function handleRewriteBullets() {
@@ -730,10 +763,18 @@ export default function AnalyzePage() {
               rewrites={rewrites}
               isMatching={isUploading || isAnalyzing || isMatching}
               isRewriting={isRewriting}
+              retryCountdown={rateLimitedAction === "analyze" ? retryCountdown : 0}
               matchError={matchError}
+              suggestionsError={match.suggestionsError}
               rewriteError={rewriteError}
               copiedBullet={copiedBullet}
               onRewrite={() => void handleRewriteBullets()}
+              onRetrySuggestions={
+                match.retryAfterSeconds === null
+                  ? undefined
+                  : () => void handleRetrySuggestions()
+              }
+              onRetryMatch={() => void handleRetrySuggestions()}
               onDownload={downloadReport}
               onCopy={(id, content) => void copyBullet(id, content)}
             />

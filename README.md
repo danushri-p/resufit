@@ -51,7 +51,7 @@ ollama run llama3.2
 npm run dev
 ```
 
-For Gemini, create a key in [Google AI Studio](https://aistudio.google.com/apikey) and set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`. The default model is `gemini-2.5-flash`.
+For Gemini, create a key in [Google AI Studio](https://aistudio.google.com/apikey) and set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in `.env.local`. The default model is `gemini-2.5-flash`; if it is rate limited, ResuFit tries the configured fallback models (default: `gemini-2.5-flash-lite`).
 
 Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` to `.env.local` to customize settings.
 
@@ -64,6 +64,7 @@ Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` to `.en
 | `OLLAMA_MODEL` | `llama3.2` | Local Ollama model. |
 | `GEMINI_API_KEY` | *(empty)* | Required when using Gemini; keep secret. |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model. |
+| `GEMINI_FALLBACK_MODELS` | `gemini-2.5-flash-lite` | Comma-separated Gemini models tried when the primary model hits a rate limit. |
 | `NEXT_PUBLIC_AI_PROVIDER_LABEL` | `Ollama (local)` | Non-secret provider label shown in the footer. |
 
 ## Tests
@@ -78,11 +79,13 @@ The test suite mocks AI network requests. CI runs these checks on Node.js 22.
 
 ## Deploy to Vercel
 
-Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Never expose the API key with a `NEXT_PUBLIC_` prefix.
+Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `GEMINI_FALLBACK_MODELS` and `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Analyze normally uses 2 Gemini requests (one combined resume/job extraction and one suggestions request); Improve bullets normally uses 1. A rate-limit fallback can add model requests. Never expose the API key with a `NEXT_PUBLIC_` prefix.
 
 ## Limitations
 
-- The free Gemini tier has rate limits; the app also uses a basic in-memory per-IP request limit.
+- The free Gemini tier has rate limits per Google project. Fallback models have their own model quotas, but all models still share the project's overall limits. Use different keys/projects for local testing and the live site if both are used heavily.
+- Analyze normally uses 2 Gemini requests (combined resume/job extraction and suggestions); Improve bullets normally uses 1. A rate-limit fallback can add model requests. ResuFit caches successful AI results in memory for up to one hour per serverless instance, so cache hits are not shared between instances.
+- The app also uses a basic in-memory per-IP request limit.
 - Small local models may be less accurate than hosted models.
 - Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
 - Analysis history is stored per browser and is not shared across browsers or devices.

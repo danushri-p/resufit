@@ -4,9 +4,12 @@ import { extractResume } from "@/lib/ai/extractResume";
 import { makeResume } from "@/tests/fixtures";
 
 vi.mock("@/lib/ai/client", () => ({
+  getAIProvider: vi.fn(() => "ollama"),
+  getOllamaModel: vi.fn(() => "llama3.2"),
   cleanSkillArray: (skills: string[]) => skills,
   generateStructured: vi.fn(),
 }));
+vi.mock("server-only", () => ({}));
 
 describe("extractResume", () => {
   beforeEach(() => {
