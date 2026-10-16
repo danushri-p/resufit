@@ -9,6 +9,7 @@ export class AIRequestError extends Error {
   constructor(
     readonly status: number,
     message = "The AI provider could not complete the request.",
+    readonly retryAfterSeconds?: number | null,
   ) {
     super(message);
     this.name = "AIRequestError";

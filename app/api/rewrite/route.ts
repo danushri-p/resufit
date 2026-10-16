@@ -24,8 +24,18 @@ const rewriteRequestSchema = z.object({
   jobText: z.string(),
 });
 
-function errorResponse(error: string, status: number) {
-  return NextResponse.json({ error }, { status });
+function errorResponse(
+  error: string,
+  status: number,
+  retryAfterSeconds?: number | null,
+) {
+  return NextResponse.json(
+    {
+      error,
+      ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
+    },
+    { status },
+  );
 }
 
 export async function POST(request: Request) {
@@ -69,7 +79,11 @@ export async function POST(request: Request) {
   } catch (error) {
     const aiError = getAIError(error, "bullet rewriting");
     if (aiError) {
-      return errorResponse(aiError.message, aiError.status);
+      return errorResponse(
+        aiError.message,
+        aiError.status,
+        aiError.retryAfterSeconds,
+      );
     }
     console.error(
       "Bullet rewrite failed:",
