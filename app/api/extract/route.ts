@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAIError } from "@/lib/ai/routeErrors";
+import { extractBoth } from "@/lib/ai/extractBoth";
 import { extractJD } from "@/lib/ai/extractJD";
 import { extractResume } from "@/lib/ai/extractResume";
 import {
@@ -65,24 +66,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    let resume: Awaited<ReturnType<typeof extractResume>>;
-    let job: Awaited<ReturnType<typeof extractJD>>;
     if (process.env.AI_PROVIDER === "gemini") {
-      resume = await extractResume(resumeText);
-      job = await extractJD(jobText);
-    } else {
-      [resume, job] = await Promise.all([
-        extractResume(resumeText),
-        extractJD(jobText),
-      ]);
+      const extracted = await extractBoth(resumeText, jobText);
+      return NextResponse.json(extracted);
     }
+
+    const [resume, job] = await Promise.all([
+      extractResume(resumeText),
+      extractJD(jobText),
+    ]);
 
     return NextResponse.json({ resume, job });
   } catch (error) {
     const aiError = getAIError(error, "extraction");
     if (aiError) {
+      const message =
+        aiError.status === 429 && process.env.AI_PROVIDER === "gemini"
+          ? `${aiError.message} You can still run ResuFit locally with Ollama — see README.`
+          : aiError.message;
       return errorResponse(
-        aiError.message,
+        message,
         aiError.status,
         aiError.retryAfterSeconds,
       );

@@ -22,10 +22,14 @@ interface AnalysisCardsProps {
   rewrites?: ProjectBulletRewrites[];
   isMatching?: boolean;
   isRewriting?: boolean;
+  retryCountdown?: number;
   matchError?: string;
+  suggestionsError?: string;
   rewriteError?: string;
   copiedBullet?: string;
   onRewrite?: () => void;
+  onRetrySuggestions?: () => void;
+  onRetryMatch?: () => void;
   onDownload?: () => void;
   onCopy?: (id: string, content: string) => void;
 }
@@ -63,10 +67,14 @@ export function AnalysisCards({
   rewrites,
   isMatching = false,
   isRewriting = false,
+  retryCountdown = 0,
   matchError,
+  suggestionsError,
   rewriteError,
   copiedBullet,
   onRewrite,
+  onRetrySuggestions,
+  onRetryMatch,
   onDownload,
   onCopy,
 }: AnalysisCardsProps) {
@@ -120,6 +128,28 @@ export function AnalysisCards({
                 ))}
               </ol>
             ) : <p className="text-sm text-stone-500">No suggestions were returned.</p>}
+            {suggestionsError && (
+              <div className="space-y-2">
+                <p className="text-sm text-stone-600" role="status">
+                  {suggestionsError}
+                </p>
+                {onRetrySuggestions && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isMatching || retryCountdown > 0}
+                    onClick={onRetrySuggestions}
+                  >
+                    Try again
+                  </Button>
+                )}
+                {retryCountdown > 0 && (
+                  <p className="text-sm text-stone-600" role="status">
+                    Try again in {retryCountdown} seconds.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {(onRewrite || onDownload) && (
@@ -129,7 +159,26 @@ export function AnalysisCards({
             </div>
           )}
           {isRewriting && <p className="text-sm text-indigo-700" role="status">Rewriting project bullets…</p>}
-          {matchError && <p className="text-sm text-red-600" role="alert">{matchError}</p>}
+          {matchError && (
+            <div className="space-y-2">
+              <p className="text-sm text-red-600" role="alert">{matchError}</p>
+              {onRetryMatch && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isMatching || retryCountdown > 0}
+                  onClick={onRetryMatch}
+                >
+                  Try again
+                </Button>
+              )}
+              {retryCountdown > 0 && (
+                <p className="text-sm text-stone-600" role="status">
+                  Try again in {retryCountdown} seconds.
+                </p>
+              )}
+            </div>
+          )}
           {rewriteError && <p className="text-sm text-red-600" role="alert">{rewriteError}</p>}
         </CardContent>
       </Card>

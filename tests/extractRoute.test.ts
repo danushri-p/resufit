@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/extract/route";
 import { extractJD } from "@/lib/ai/extractJD";
+import { extractBoth } from "@/lib/ai/extractBoth";
 import { extractResume } from "@/lib/ai/extractResume";
 import { AIRequestError } from "@/lib/ai/errors";
 import type { JobRequirements, Resume } from "@/lib/schemas";
 import { makeJob, makeResume } from "@/tests/fixtures";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/ai/extractBoth", () => ({
+  extractBoth: vi.fn(),
+}));
 vi.mock("@/lib/ai/extractJD", () => ({
   extractJD: vi.fn(),
 }));
@@ -35,6 +39,7 @@ function makeRequest(): Request {
 describe("POST /api/extract", () => {
   beforeEach(() => {
     vi.stubEnv("AI_PROVIDER", "gemini");
+    vi.mocked(extractBoth).mockReset();
     vi.mocked(extractResume).mockReset();
     vi.mocked(extractJD).mockReset();
   });
@@ -43,24 +48,22 @@ describe("POST /api/extract", () => {
     vi.unstubAllEnvs();
   });
 
-  it("runs Gemini resume and job extraction sequentially", async () => {
-    let resolveResume!: (resume: Resume) => void;
-    vi.mocked(extractResume).mockReturnValue(
-      new Promise((resolve) => {
-        resolveResume = resolve;
-      }),
-    );
-    vi.mocked(extractJD).mockResolvedValue(makeJob());
+  it("uses one combined Gemini extraction call", async () => {
+    vi.mocked(extractBoth).mockResolvedValue({
+      resume: makeResume(),
+      job: makeJob(),
+    });
 
-    const responsePromise = POST(makeRequest());
-    await vi.waitFor(() => expect(extractResume).toHaveBeenCalledOnce());
-    expect(extractJD).not.toHaveBeenCalled();
-
-    resolveResume(makeResume());
-    const response = await responsePromise;
+    const response = await POST(makeRequest());
 
     expect(response.status).toBe(200);
-    expect(extractJD).toHaveBeenCalledOnce();
+    expect(extractBoth).toHaveBeenCalledOnce();
+    expect(extractBoth).toHaveBeenCalledWith(
+      requestBody.resumeText,
+      requestBody.jobText,
+    );
+    expect(extractResume).not.toHaveBeenCalled();
+    expect(extractJD).not.toHaveBeenCalled();
   });
 
   it("keeps extraction concurrent for non-Gemini providers", async () => {
@@ -87,10 +90,11 @@ describe("POST /api/extract", () => {
     resolveResume(makeResume());
     resolveJob(makeJob());
     expect((await responsePromise).status).toBe(200);
+    expect(extractBoth).not.toHaveBeenCalled();
   });
 
   it("passes Gemini retry seconds through the 429 JSON response", async () => {
-    vi.mocked(extractResume).mockRejectedValue(
+    vi.mocked(extractBoth).mockRejectedValue(
       new AIRequestError(
         429,
         "The free Gemini limit was reached. Try again in 37 seconds.",
@@ -102,13 +106,14 @@ describe("POST /api/extract", () => {
 
     expect(response.status).toBe(429);
     await expect(response.json()).resolves.toMatchObject({
-      error: "The free Gemini limit was reached. Try again in 37 seconds.",
+      error:
+        "The free Gemini limit was reached. Try again in 37 seconds. You can still run ResuFit locally with Ollama — see README.",
       retryAfterSeconds: 37,
     });
   });
 
   it("passes a null retry delay for daily Gemini quota errors", async () => {
-    vi.mocked(extractResume).mockRejectedValue(
+    vi.mocked(extractBoth).mockRejectedValue(
       new AIRequestError(
         429,
         "Today's free Gemini limit has been used up. It resets daily (midnight Pacific time). Please try again tomorrow.",
@@ -121,7 +126,7 @@ describe("POST /api/extract", () => {
     expect(response.status).toBe(429);
     await expect(response.json()).resolves.toMatchObject({
       error:
-        "Today's free Gemini limit has been used up. It resets daily (midnight Pacific time). Please try again tomorrow.",
+        "Today's free Gemini limit has been used up. It resets daily (midnight Pacific time). Please try again tomorrow. You can still run ResuFit locally with Ollama — see README.",
       retryAfterSeconds: null,
     });
   });

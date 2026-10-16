@@ -91,11 +91,14 @@ export async function POST(request: Request) {
   } catch (error) {
     const aiError = getAIError(error, "suggestions");
     if (aiError?.status === 429) {
-      return errorResponse(
-        aiError.message,
-        aiError.status,
-        aiError.retryAfterSeconds,
-      );
+      return NextResponse.json({
+        ...baseResult,
+        suggestions: [],
+        suggestionsError: aiError.message.includes("Today's free Gemini limit")
+          ? "Suggestions are unavailable right now (daily AI limit). Your score and ATS check are complete."
+          : "Suggestions are unavailable right now (AI limit). Your score and ATS check are complete.",
+        retryAfterSeconds: aiError.retryAfterSeconds,
+      });
     }
     if (aiError) {
       console.error(

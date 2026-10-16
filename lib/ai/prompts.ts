@@ -7,6 +7,16 @@ export const JOB_EXTRACTION_PROMPT = `Extract structured job requirements from t
 
 Use only information explicitly present in the description. Do not guess, infer, or invent facts. Use null for missing text values, null for yearsOfExperience if no required number of years is stated, and empty arrays for missing lists. Put every specific required skill, technology, programming language, framework, database, tool, and concept mentioned in mustHaveSkills as a separate short technology or skill name of 1–3 words, such as React, Unit testing, or CI/CD. Never include qualifiers such as "fundamentals", "basic", "strong", or "experience with" in a skill name. Do not include soft practices such as code reviews in mustHaveSkills or niceToHaveSkills; include them only in responsibilities. When the description presents alternatives such as "MongoDB or PostgreSQL" or "React/Vue", put only the first alternative in mustHaveSkills and put the others in niceToHaveSkills. Do not use vague items such as "AI" or "web development" when the description mentions more specific skills. Put preferred, optional, bonus, or nice-to-have items in niceToHaveSkills, also as individual short skill names. Each responsibility must be a short, complete phrase taken from the description, not a single word.`;
 
+export const COMBINED_EXTRACTION_PROMPT = `Extract both a resume and job requirements from the supplied source text.
+
+RESUME EXTRACTION RULES:
+${RESUME_EXTRACTION_PROMPT}
+
+JOB REQUIREMENT EXTRACTION RULES:
+${JOB_EXTRACTION_PROMPT}
+
+The source contains two clearly labeled sections. Apply resume rules only to the RESUME section and job requirement rules only to the JOB DESCRIPTION section.`;
+
 export const RESUME_SUGGESTIONS_PROMPT = `You are a resume coach writing directly to the candidate using "you" and "your". Give up to 5 specific suggestions to make your resume fit this job better.
 
 NEVER tell the candidate to add a skill, certification, job, or years of experience they do not already have. For missing skills, suggest learning the skill or building a small project with it, clearly worded as something to do, not something to write on the resume.

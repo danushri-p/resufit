@@ -3,6 +3,8 @@ import { makeJob, makeResume } from "@/tests/fixtures";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/ai/client", () => ({
+  getAIProvider: vi.fn(() => "ollama"),
+  getOllamaModel: vi.fn(() => "llama3.2"),
   generateStructured: vi.fn().mockResolvedValue({
     suggestions: [
       { title: "learn typescript", detail: "Learn TypeScript in a small project." },
