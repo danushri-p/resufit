@@ -13,6 +13,7 @@ import type {
   MatchResult,
   ProjectBulletRewrites,
   Resume,
+  InterviewPrepResult,
 } from "@/lib/schemas";
 
 interface AnalysisCardsProps {
@@ -21,6 +22,7 @@ interface AnalysisCardsProps {
   match: MatchResult;
   rewrites?: ProjectBulletRewrites[];
   coverLetter?: string;
+  interviewPrep?: InterviewPrepResult;
   isMatching?: boolean;
   isRewriting?: boolean;
   retryCountdown?: number;
@@ -67,6 +69,7 @@ export function AnalysisCards({
   match,
   rewrites,
   coverLetter,
+  interviewPrep,
   isMatching = false,
   isRewriting = false,
   retryCountdown = 0,
@@ -261,6 +264,70 @@ export function AnalysisCards({
             <p className="whitespace-pre-wrap text-sm leading-6 text-stone-700">
               {coverLetter}
             </p>
+          </CardContent>
+        </Card>
+      )}
+      {interviewPrep && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Interview prep</CardTitle>
+            <CardDescription>
+              Read-only interview questions and resume-based answer outlines.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {interviewPrep.warnings.length > 0 && (
+              <div className="rounded-md bg-stone-100 p-3 text-sm text-stone-700" role="status">
+                <p className="font-medium">Accuracy notes</p>
+                <ul className="mt-1 list-disc pl-5">
+                  {interviewPrep.warnings.map((warning, index) => (
+                    <li key={`${warning}-${index}`}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(
+              [
+                ["technical", "Technical"],
+                ["gap", "Skill gaps"],
+                ["project", "Your projects"],
+                ["behavioral", "Behavioral"],
+              ] as const
+            ).map(([category, title]) => {
+              const questions = interviewPrep.questions.filter(
+                (question) => question.category === category,
+              );
+              if (!questions.length) return null;
+              return (
+                <section key={category} className="space-y-3">
+                  <h3 className="font-medium">{title}</h3>
+                  <ul className="space-y-3">
+                    {questions.map((question, index) => (
+                      <li key={`${question.question}-${index}`}>
+                        <details className="rounded-md border border-stone-200 p-3">
+                          <summary className="cursor-pointer font-medium">
+                            {question.question}
+                          </summary>
+                          <div className="mt-3 space-y-2 text-sm">
+                            <p><span className="font-medium">Why they ask:</span> {question.whyAsked}</p>
+                            {question.basedOn && (
+                              <p className="inline-flex rounded-full bg-cyan-100 px-2.5 py-1 font-medium text-cyan-950">
+                                Based on: {question.basedOn}
+                              </p>
+                            )}
+                            <ul className="list-disc space-y-1 pl-5">
+                              {question.answerOutline.map((bullet, bulletIndex) => (
+                                <li key={`${bullet}-${bulletIndex}`}>{bullet}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
           </CardContent>
         </Card>
       )}

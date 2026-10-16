@@ -23,6 +23,7 @@ ResuFit compares a resume with a job description and gives an honest match score
 - Review tailored suggestions and ATS checks.
 - Rewrite project bullets with checks against unsupported facts and technologies.
 - Generate a tailored, editable cover letter using only resume facts.
+- Prepare for interviews with resume-grounded questions and answer outlines.
 - Download a Markdown report.
 - Keep up to ten recent analyses in browser-local history.
 
@@ -46,6 +47,7 @@ Next.js, TypeScript, Tailwind CSS, Zod, Vitest, Playwright, axe-core, Ollama or 
 - **Missing-skill guard:** rejects rewrites and suggestions that claim a skill listed as missing, except when a rewrite retains a claim already present in its original bullet.
 - **Technology guard:** limits rewritten technologies to those already named in the bullet or project tech stack.
 - **Cover-letter guard:** checks unsupported numbers, missing skills, and project/company names; inaccurate paragraphs are retried or removed.
+- **Interview-prep guard:** checks unsupported numbers and missing-skill claims, and clears any project or experience reference that is not in the resume.
 - **Deterministic results:** match score and ATS checks are rule-based and do not use AI.
 
 ## Run locally
@@ -84,7 +86,7 @@ npm run e2e
 
 Unit tests use Vitest. End-to-end tests use Playwright with Chromium and axe-core
 accessibility scans. The browser tests mock `/api/extract`, `/api/analyze`,
-`/api/rewrite`, and `/api/cover-letter`; `/api/resume` remains real so the checked-in
+`/api/rewrite`, `/api/cover-letter`, and `/api/interview-prep`; `/api/resume` remains real so the checked-in
 PDF and DOCX fixtures exercise document parsing without contacting an AI provider.
 The fixtures are generated from `lib/samples.ts` with
 `python e2e/generate-fixtures.py`.
@@ -100,13 +102,14 @@ and end-to-end tests on Node.js 24 without AI-provider secrets.
 
 ## Deploy to Vercel
 
-Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `GEMINI_FALLBACK_MODELS` and `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Analyze normally uses 2 Gemini requests (one combined resume/job extraction and one suggestions request); Improve bullets and Write cover letter normally use 1 each. A rate-limit fallback can add model requests. Never expose the API key with a `NEXT_PUBLIC_` prefix.
+Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API_KEY` in project environment variables, optionally set `GEMINI_FALLBACK_MODELS` and `NEXT_PUBLIC_AI_PROVIDER_LABEL=Gemini`, and deploy. Analyze normally uses 2 Gemini requests (one combined resume/job extraction and one suggestions request); Improve bullets, Write cover letter, and Prepare for interview normally use 1 each. A rate-limit fallback can add model requests. Never expose the API key with a `NEXT_PUBLIC_` prefix.
 
 ## Limitations
 
 - The free Gemini tier has rate limits per Google project. Fallback models have their own model quotas, but all models still share the project's overall limits. Use different keys/projects for local testing and the live site if both are used heavily.
 - Analyze normally uses 2 Gemini requests (combined resume/job extraction and suggestions); Improve bullets normally uses 1. A rate-limit fallback can add model requests. ResuFit caches successful AI results in memory for up to one hour per serverless instance, so cache hits are not shared between instances.
 - Write cover letter normally uses 1 AI request, or 0 when the result is cached. Google retires model names over time, so the configured fallback includes the `gemini-flash-lite-latest` alias.
+- Prepare for interview normally uses 1 AI request, or 0 when the result is cached. Interview outlines are suggestions for practice, not scripts; answer in your own words.
 - The app also uses a basic in-memory per-IP request limit.
 - Small local models may be less accurate than hosted models.
 - Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
@@ -123,3 +126,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 7:** Polish sample flow, landing page, error states, metadata, and CI.
 - **Day 8:** Add honest, tailored cover letter generation.
 - **Day 9:** Add Playwright end-to-end tests, axe accessibility checks, and generated README screenshots.
+- **Day 10:** Add honest interview preparation with guarded, resume-based answer outlines.

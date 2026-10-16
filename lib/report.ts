@@ -2,6 +2,7 @@ import type {
   JobRequirements,
   MatchResult,
   ProjectBulletRewrites,
+  InterviewPrepResult,
   Resume,
 } from "@/lib/schemas";
 
@@ -12,6 +13,41 @@ interface MarkdownReportOptions {
   match: MatchResult;
   rewrites?: ProjectBulletRewrites[];
   coverLetter?: string;
+  interviewPrep?: InterviewPrepResult;
+}
+
+const interviewCategoryTitles = {
+  technical: "Technical",
+  gap: "Skill gaps",
+  project: "Your projects",
+  behavioral: "Behavioral",
+} as const;
+
+export function buildInterviewPrepMarkdown(
+  interviewPrep: InterviewPrepResult,
+): string {
+  return [
+    ...Object.entries(interviewCategoryTitles).flatMap(([category, title]) => {
+      const questions = interviewPrep.questions.filter(
+        (question) => question.category === category,
+      );
+      if (!questions.length) return [];
+      return [
+        `## ${title}`,
+        ...questions.map((question) =>
+          [
+            `### ${question.question}`,
+            `**Why they ask:** ${question.whyAsked}`,
+            ...(question.basedOn ? [`**Based on:** ${question.basedOn}`] : []),
+            ...question.answerOutline.map((bullet) => `- ${bullet}`),
+          ].join("\n"),
+        ),
+      ];
+    }),
+    ...(interviewPrep.warnings.length
+      ? ["## Accuracy notes", ...interviewPrep.warnings.map((warning) => `- ${warning}`)]
+      : []),
+  ].join("\n\n");
 }
 
 function skillList(skills: string[]): string {
@@ -25,6 +61,7 @@ export function buildMarkdownReport({
   match,
   rewrites,
   coverLetter,
+  interviewPrep,
 }: MarkdownReportOptions): string {
   const jobTitle = job.jobTitle?.trim() || "Job match report";
   const suggestions = match.suggestions.length > 0
@@ -46,6 +83,9 @@ export function buildMarkdownReport({
     : "";
   const coverLetterSection = coverLetter?.trim()
     ? `## Cover letter\n\n${coverLetter.trim()}`
+    : "";
+  const interviewPrepSection = interviewPrep?.questions.length
+    ? `## Interview prep\n\n${buildInterviewPrepMarkdown(interviewPrep)}`
     : "";
 
   return [
@@ -74,6 +114,7 @@ export function buildMarkdownReport({
     suggestions,
     improvedBullets,
     coverLetterSection,
+    interviewPrepSection,
   ]
     .filter(Boolean)
     .join("\n\n");
