@@ -138,7 +138,6 @@ export function UploadBox({
         <div
           role="button"
           tabIndex={0}
-          aria-label="Choose a PDF or DOCX resume"
           aria-disabled={isUploading}
           aria-describedby={error ? "resume-upload-error" : undefined}
           onClick={() => {

@@ -6,11 +6,13 @@ ResuFit compares a resume with a job description and gives an honest match score
 
 ## Screenshots
 
-Add screenshots at:
+![Analyze page](docs/screenshots/analyze.png)
 
-- `docs/screenshots/analyze.png`
-- `docs/screenshots/results.png`
-- `docs/screenshots/history.png`
+![Analysis results](docs/screenshots/results.png)
+
+![Analysis history](docs/screenshots/history.png)
+
+![Cover letter](docs/screenshots/cover-letter.png)
 
 ## Features
 
@@ -34,7 +36,7 @@ Resume and job details are extracted by the selected AI provider and validated w
 
 ## Tech stack
 
-Next.js, TypeScript, Tailwind CSS, Zod, Vitest, Ollama or Google Gemini, `pdf-parse`, and `mammoth`.
+Next.js, TypeScript, Tailwind CSS, Zod, Vitest, Playwright, axe-core, Ollama or Google Gemini, `pdf-parse`, and `mammoth`.
 
 ## Honesty safeguards
 
@@ -69,15 +71,30 @@ Open [http://localhost:3000](http://localhost:3000). Copy `.env.example` to `.en
 | `GEMINI_FALLBACK_MODELS` | `gemini-flash-lite-latest,gemini-3.5-flash-lite` | Comma-separated Gemini models tried when the primary model hits a rate limit; Google retires model names over time, so the `-latest` alias is included. |
 | `NEXT_PUBLIC_AI_PROVIDER_LABEL` | `Ollama (local)` | Non-secret provider label shown in the footer. |
 
-## Tests
+## Testing
 
 ```bash
 npm run lint
 npm test
 npm run build
+npm run e2e
 ```
 
-The test suite mocks AI network requests. CI runs these checks on Node.js 22.
+Unit tests use Vitest. End-to-end tests use Playwright with Chromium and axe-core
+accessibility scans. The browser tests mock `/api/extract`, `/api/analyze`,
+`/api/rewrite`, and `/api/cover-letter`; `/api/resume` remains real so the checked-in
+PDF and DOCX fixtures exercise document parsing without contacting an AI provider.
+The fixtures are generated from `lib/samples.ts` with
+`python e2e/generate-fixtures.py`.
+
+Regenerate the README screenshots with:
+
+```bash
+npm run screenshots
+```
+
+The screenshots spec captures the sample flow at 1280px wide. CI runs validation
+and end-to-end tests on Node.js 24 without AI-provider secrets.
 
 ## Deploy to Vercel
 
@@ -103,4 +120,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 6:** Add Gemini, deployment configuration, and public-site safeguards.
 - **Day 7:** Polish sample flow, landing page, error states, metadata, and CI.
 - **Day 8:** Add honest, tailored cover letter generation.
-
+- **Day 9:** Add Playwright end-to-end tests, axe accessibility checks, and generated README screenshots.

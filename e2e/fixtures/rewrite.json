@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    {
+      "projectName": "CampusConnect",
+      "rewrites": [
+        {
+          "original": "Developed 12 REST endpoints with Node.js and Express to manage events and participant records.",
+          "rewritten": "Built 12 Node.js and Express REST endpoints to manage campus events and participant records.",
+          "reason": "Clarifies the backend technologies and project outcome."
+        }
+      ]
+    },
+    {
+      "projectName": "StudySpace",
+      "rewrites": [
+        {
+          "original": "Implemented searchable room listings with filters for building, capacity, equipment, and available time.",
+          "rewritten": "Created searchable study-room listings with filters for building, capacity, equipment, and availability.",
+          "reason": "Makes the feature scope easier to scan."
+        }
+      ]
+    }
+  ]
+}

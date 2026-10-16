@@ -1,0 +1,86 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 2791 >>
+stream
+BT
+/F1 9 Tf
+40 760 Td
+11 TL
+(Alex Kumar) Tj T*
+(alex.kumar@example.com | +1 555-010-0199) Tj T*
+() Tj T*
+(SUMMARY) Tj T*
+(Computer science student interested in building useful, accessible web applications. I enjoy) Tj T*
+(working across the frontend and backend, learning from feedback, and turning small ideas into) Tj T*
+(dependable tools. I contribute carefully, communicate clearly, and grow through practical) Tj T*
+(engineering work.) Tj T*
+() Tj T*
+(SKILLS) Tj T*
+(JavaScript, TypeScript, React, Next.js, Node.js, Express, PostgreSQL, MongoDB, Git, REST APIs,) Tj T*
+(HTML, CSS, Jest) Tj T*
+() Tj T*
+(PROJECTS) Tj T*
+(CampusConnect - Student event planner) Tj T*
+(Built a responsive event board for 3 fictional student clubs to publish activities, manage) Tj T*
+(registrations, and share timely updates.) Tj T*
+(- Created reusable React and TypeScript components for event discovery, filtering, and) Tj T*
+(registration.) Tj T*
+(- Developed 12 REST endpoints with Node.js and Express to manage events and participant) Tj T*
+(records.) Tj T*
+(- Integrated PostgreSQL data models and validation for event details, attendance limits, and) Tj T*
+(registration status.) Tj T*
+() Tj T*
+(StudySpace - Collaborative study-room finder) Tj T*
+(Designed a small web app that helps students find study rooms, check availability, and) Tj T*
+(coordinate group sessions.) Tj T*
+(- Implemented searchable room listings with filters for building, capacity, equipment, and) Tj T*
+(available time.) Tj T*
+(- Integrated a Next.js interface with MongoDB-backed APIs for room details and saved) Tj T*
+(preferences.) Tj T*
+(- Developed clear empty, loading, and error states, then tested key flows with Jest and peer) Tj T*
+(feedback.) Tj T*
+() Tj T*
+(EDUCATION) Tj T*
+(Bachelor of Science in Computer Science) Tj T*
+(Example State University | Expected 2027) Tj T*
+(Relevant study: data structures, databases, web development, software engineering, and human-) Tj T*
+(computer interaction.) Tj T*
+() Tj T*
+(ADDITIONAL) Tj T*
+(Use Git branches and pull requests for class projects. Document setup steps so teammates can) Tj T*
+(run the application locally. Review changes with classmates, fix issues found during testing,) Tj T*
+(and keep interfaces usable on mobile screens. Interested in accessible design, reliable APIs,) Tj T*
+(and learning how production teams ship software. I also keep project notes concise, divide) Tj T*
+(larger tasks into smaller steps, check forms with keyboard navigation, and ask teammates to) Tj T*
+(try workflows before calling a feature complete. These fictional class projects were built for) Tj T*
+(practice and have not been used by real organizations. I enjoy explaining technical decisions) Tj T*
+(in plain language and making room for constructive feedback.) Tj T*
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000247 00000 n 
+0000000317 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+3160
+%%EOF
