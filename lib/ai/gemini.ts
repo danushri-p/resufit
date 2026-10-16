@@ -10,8 +10,7 @@ import {
 
 const GEMINI_TIMEOUT_MS = 120_000;
 const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
-const DEFAULT_GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash-lite"];
-
+const DEFAULT_GEMINI_FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite"];
 const geminiResponseSchema = z.object({
   candidates: z.array(
     z.object({
