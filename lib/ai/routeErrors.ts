@@ -11,6 +11,7 @@ const isOllama = () => process.env.AI_PROVIDER !== "gemini";
 export function getAIError(error: unknown, action: string): {
   message: string;
   status: number;
+  retryAfterSeconds?: number | null;
 } | undefined {
   if (error instanceof InvalidAIOutputError) {
     return {
@@ -47,6 +48,7 @@ export function getAIError(error: unknown, action: string): {
           ? error.message
           : "You've made too many AI requests. Please wait a minute and try again.",
         status: 429,
+        retryAfterSeconds: error.retryAfterSeconds,
       };
     }
 

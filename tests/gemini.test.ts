@@ -28,6 +28,7 @@ describe("Gemini provider", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("sends the key in a header and parses schema-valid JSON", async () => {
@@ -60,10 +61,71 @@ describe("Gemini provider", () => {
     expect(body.generationConfig.responseJsonSchema).toBeDefined();
   });
 
-  it("maps Gemini 429 and 401 responses to AI request errors", async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(new Response(null, { status: 429 }))
-      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+  it("maps per-day Gemini 429 responses without a retry countdown", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json(
+        {
+          error: {
+            details: [
+              {
+                "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                violations: [{ quotaId: "GenerateRequestsPerDayPerProject" }],
+              },
+              {
+                "@type": "type.googleapis.com/google.rpc.RetryInfo",
+                retryDelay: "37s",
+              },
+            ],
+          },
+        },
+        { status: 429 },
+      ),
+    );
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      generateWithGemini({
+        prompt: "private prompt",
+        schema,
+        userMessage: "private user content",
+      }),
+    ).rejects.toMatchObject({
+      constructor: AIRequestError,
+      status: 429,
+      message:
+        "Today's free Gemini limit has been used up. It resets daily (midnight Pacific time). Please try again tomorrow.",
+      retryAfterSeconds: null,
+    });
+
+    expect(errorLog).toHaveBeenCalledWith("Gemini rate limit details:", {
+      quotaId: "GenerateRequestsPerDayPerProject",
+      retryDelay: "37s",
+    });
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain("private prompt");
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain("private user content");
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain("test-secret-key");
+  });
+
+  it("uses Gemini's retry delay for per-minute 429 responses", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json(
+        {
+          error: {
+            details: [
+              {
+                "@type": "type.googleapis.com/google.rpc.QuotaFailure",
+                violations: [{ quotaId: "GenerateRequestsPerMinutePerProject" }],
+              },
+              {
+                "@type": "type.googleapis.com/google.rpc.RetryInfo",
+                retryDelay: "37s",
+              },
+            ],
+          },
+        },
+        { status: 429 },
+      ),
+    );
 
     await expect(
       generateWithGemini({
@@ -73,8 +135,30 @@ describe("Gemini provider", () => {
       }),
     ).rejects.toMatchObject({
       constructor: AIRequestError,
-      message: "The free Gemini limit was reached, try again in a minute",
+      message: "The free Gemini limit was reached. Try again in 37 seconds.",
+      retryAfterSeconds: 37,
     });
+  });
+
+  it("uses the one-minute fallback when Gemini 429 details are missing", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 429 }));
+
+    await expect(
+      generateWithGemini({
+        prompt: "prompt",
+        schema,
+        userMessage: "text",
+      }),
+    ).rejects.toMatchObject({
+      constructor: AIRequestError,
+      message: "The free Gemini limit was reached. Try again in a minute.",
+      retryAfterSeconds: 60,
+    });
+  });
+
+  it("maps Gemini 401 responses to AI request errors", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
     await expect(
       generateWithGemini({
         prompt: "prompt",

@@ -50,6 +50,68 @@ async function getErrorMessage(response: Response): Promise<string> {
   return "";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+async function getGeminiRateLimit(response: Response): Promise<{
+  message: string;
+  retryAfterSeconds: number | null;
+}> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    body = undefined;
+  }
+
+  const error = isRecord(body) && isRecord(body.error) ? body.error : undefined;
+  const details = error && Array.isArray(error.details) ? error.details : [];
+  const quotaIds = details.flatMap((detail) => {
+    if (!isRecord(detail) || !Array.isArray(detail.violations)) {
+      return [];
+    }
+    return detail.violations.flatMap((violation) =>
+      isRecord(violation) && typeof violation.quotaId === "string"
+        ? [violation.quotaId]
+        : [],
+    );
+  });
+  const retryDelay = details
+    .map((detail) =>
+      isRecord(detail) && typeof detail.retryDelay === "string"
+        ? detail.retryDelay
+        : undefined,
+    )
+    .find((value) => value !== undefined);
+
+  console.error("Gemini rate limit details:", {
+    quotaId: quotaIds[0] ?? null,
+    retryDelay: retryDelay ?? null,
+  });
+
+  if (quotaIds.some((quotaId) => quotaId.includes("PerDay"))) {
+    return {
+      message:
+        "Today's free Gemini limit has been used up. It resets daily (midnight Pacific time). Please try again tomorrow.",
+      retryAfterSeconds: null,
+    };
+  }
+
+  const retryMatch = retryDelay?.trim().match(/^(\d+(?:\.\d+)?)s$/);
+  const retryAfterSeconds = retryMatch
+    ? Math.ceil(Number(retryMatch[1]))
+    : 60;
+
+  return {
+    message:
+      retryAfterSeconds === 60 && !retryMatch
+        ? "The free Gemini limit was reached. Try again in a minute."
+        : `The free Gemini limit was reached. Try again in ${retryAfterSeconds} seconds.`,
+    retryAfterSeconds,
+  };
+}
+
 export async function generateWithGemini<T>({
   prompt,
   schema,
@@ -102,6 +164,10 @@ export async function generateWithGemini<T>({
 
   let response = await request(true);
   if (!response.ok) {
+    if (response.status === 429) {
+      const rateLimit = await getGeminiRateLimit(response);
+      throwGeminiRequestError(response.status, rateLimit);
+    }
     const message = await getErrorMessage(response);
     if (response.status === 400 && isSchemaRejection(message)) {
       response = await request(false);
@@ -111,6 +177,10 @@ export async function generateWithGemini<T>({
   }
 
   if (!response.ok) {
+    if (response.status === 429) {
+      const rateLimit = await getGeminiRateLimit(response);
+      throwGeminiRequestError(response.status, rateLimit);
+    }
     throwGeminiRequestError(response.status);
   }
 
@@ -136,7 +206,10 @@ export async function generateWithGemini<T>({
   return text;
 }
 
-function throwGeminiRequestError(status: number): never {
+function throwGeminiRequestError(
+  status: number,
+  rateLimit?: { message: string; retryAfterSeconds: number | null },
+): never {
   if (status === 401 || status === 403) {
     throw new AIRequestError(
       status,
@@ -146,7 +219,8 @@ function throwGeminiRequestError(status: number): never {
   if (status === 429) {
     throw new AIRequestError(
       status,
-      "The free Gemini limit was reached, try again in a minute",
+      rateLimit?.message ?? "The free Gemini limit was reached. Try again in a minute.",
+      rateLimit ? rateLimit.retryAfterSeconds : 60,
     );
   }
   throw new AIRequestError(

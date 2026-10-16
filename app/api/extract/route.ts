@@ -12,8 +12,18 @@ const MIN_JOB_TEXT_LENGTH = 50;
 const RATE_LIMIT_MESSAGE =
   "You've made too many AI requests. Please wait a minute and try again.";
 
-function errorResponse(error: string, status: number) {
-  return NextResponse.json({ error }, { status });
+function errorResponse(
+  error: string,
+  status: number,
+  retryAfterSeconds?: number | null,
+) {
+  return NextResponse.json(
+    {
+      error,
+      ...(retryAfterSeconds !== undefined ? { retryAfterSeconds } : {}),
+    },
+    { status },
+  );
 }
 
 export async function POST(request: Request) {
@@ -55,16 +65,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    const [resume, job] = await Promise.all([
-      extractResume(resumeText),
-      extractJD(jobText),
-    ]);
+    let resume: Awaited<ReturnType<typeof extractResume>>;
+    let job: Awaited<ReturnType<typeof extractJD>>;
+    if (process.env.AI_PROVIDER === "gemini") {
+      resume = await extractResume(resumeText);
+      job = await extractJD(jobText);
+    } else {
+      [resume, job] = await Promise.all([
+        extractResume(resumeText),
+        extractJD(jobText),
+      ]);
+    }
 
     return NextResponse.json({ resume, job });
   } catch (error) {
     const aiError = getAIError(error, "extraction");
     if (aiError) {
-      return errorResponse(aiError.message, aiError.status);
+      return errorResponse(
+        aiError.message,
+        aiError.status,
+        aiError.retryAfterSeconds,
+      );
     }
 
     console.error(

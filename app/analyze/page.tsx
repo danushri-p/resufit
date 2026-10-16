@@ -53,6 +53,24 @@ function getApiError(value: unknown): string | undefined {
   return undefined;
 }
 
+function getRetryAfterSeconds(value: unknown): number | null | undefined {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "retryAfterSeconds" in value
+  ) {
+    if (value.retryAfterSeconds === null) return null;
+    if (
+      typeof value.retryAfterSeconds === "number" &&
+      Number.isFinite(value.retryAfterSeconds) &&
+      value.retryAfterSeconds >= 0
+    ) {
+      return value.retryAfterSeconds;
+    }
+  }
+  return undefined;
+}
+
 function parseExtractionResult(value: unknown): ExtractionResult | undefined {
   if (typeof value !== "object" || value === null || !("resume" in value) || !("job" in value)) {
     return undefined;
@@ -226,9 +244,17 @@ export default function AnalyzePage() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  function startRateLimitCooldown(action: RateLimitedAction) {
+  function startRateLimitCooldown(
+    action: RateLimitedAction,
+    retryAfterSeconds?: number | null,
+  ) {
+    if (retryAfterSeconds === null) {
+      setRateLimitedAction(undefined);
+      setRetryCountdown(0);
+      return;
+    }
     setRateLimitedAction(action);
-    setRetryCountdown(60);
+    setRetryCountdown(retryAfterSeconds ?? 60);
   }
 
   function clearRateLimitCooldown() {
@@ -344,7 +370,7 @@ export default function AnalyzePage() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          startRateLimitCooldown("analyze");
+          startRateLimitCooldown("analyze", getRetryAfterSeconds(payload));
         }
         throw new Error(
           getApiError(payload) ?? "Could not analyze the resume and job description.",
@@ -374,7 +400,10 @@ export default function AnalyzePage() {
 
         if (!matchResponse.ok) {
           if (matchResponse.status === 429) {
-            startRateLimitCooldown("analyze");
+            startRateLimitCooldown(
+              "analyze",
+              getRetryAfterSeconds(matchPayload),
+            );
           }
           throw new Error(
             getApiError(matchPayload) ?? "Could not analyze the resume match.",
@@ -461,7 +490,7 @@ export default function AnalyzePage() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          startRateLimitCooldown("rewrite");
+          startRateLimitCooldown("rewrite", getRetryAfterSeconds(payload));
         }
         throw new Error(
           getApiError(payload) ?? "Could not improve the resume bullets.",
