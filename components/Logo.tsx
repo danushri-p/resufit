@@ -44,7 +44,7 @@ export function Logo({
         <polyline
           points="50,62 62,84 92,48"
           fill="none"
-          stroke="#34D399"
+          stroke="#22D3EE"
           strokeWidth="12"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -55,7 +55,7 @@ export function Logo({
           className="whitespace-nowrap font-semibold text-slate-900"
           style={{ fontSize: size * 0.72, letterSpacing: "-0.04em" }}
         >
-          Resu<span className="text-indigo-600">Fit</span>
+          Resu<span style={{ color: "#0891B2" }}>Fit</span>
         </span>
       )}
     </span>
