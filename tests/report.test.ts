@@ -39,4 +39,27 @@ describe("buildMarkdownReport", () => {
     expect(report).toContain("Highlight React");
     expect(report).toContain("Learn PostgreSQL");
   });
+
+  it("includes a cover letter section when a letter exists", () => {
+    const match: MatchResult = {
+      score: 82,
+      label: "Strong match",
+      matchedMustHave: [],
+      missingMustHave: [],
+      matchedNiceToHave: [],
+      missingNiceToHave: [],
+      suggestions: [],
+      ats: { score: 75, checks: [] },
+    };
+    const report = buildMarkdownReport({
+      fileName: "resume.pdf",
+      resume: makeResume(),
+      job: makeJob(),
+      match,
+      coverLetter: "Dear Hiring Team,\n\nMy edited cover letter.",
+    });
+
+    expect(report).toContain("## Cover letter");
+    expect(report).toContain("My edited cover letter.");
+  });
 });

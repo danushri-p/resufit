@@ -10,7 +10,10 @@ import {
 
 const GEMINI_TIMEOUT_MS = 120_000;
 const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
-const DEFAULT_GEMINI_FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.5-flash-lite"];
+const DEFAULT_GEMINI_FALLBACK_MODELS = [
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash-lite",
+];
 const geminiResponseSchema = z.object({
   candidates: z.array(
     z.object({
@@ -32,6 +35,7 @@ interface GeminiRateLimit {
 interface ExhaustedGeminiModel {
   expiresAt: number;
   rateLimit: GeminiRateLimit;
+  unavailable?: boolean;
 }
 
 const exhaustedModels = new Map<string, ExhaustedGeminiModel>();
@@ -170,12 +174,22 @@ function allModelsExhausted(models: string[]): AIRequestError {
       } => Boolean(entry.exhaustion),
     );
   const daily = active.filter((entry) => entry.exhaustion.rateLimit.isPerDay);
+  const unavailable = active.filter(
+    (entry) => entry.exhaustion.unavailable,
+  );
 
   if (active.length === 0) {
     return new AIRequestError(
       429,
       "The free Gemini limit was reached. Try again in a minute.",
       60,
+    );
+  }
+
+  if (unavailable.length === active.length) {
+    return new AIRequestError(
+      404,
+      "Gemini could not complete the request. Please try again.",
     );
   }
 
@@ -260,6 +274,25 @@ export async function generateWithGemini<T>({
     if (getActiveExhaustion(model)) continue;
 
     const response = await request(model, true);
+
+    if (response.status === 404) {
+      exhaustedModels.set(model, {
+        expiresAt: Number.POSITIVE_INFINITY,
+        unavailable: true,
+        rateLimit: {
+          message: "Gemini model is unavailable.",
+          retryAfterSeconds: null,
+          retryDelay: null,
+          quotaId: null,
+          isPerDay: false,
+        },
+      });
+      console.error("Gemini model unavailable:", {
+        model,
+        reason: "model unavailable",
+      });
+      continue;
+    }
 
     if (response.status === 429) {
       const rateLimit = await getGeminiRateLimit(response);

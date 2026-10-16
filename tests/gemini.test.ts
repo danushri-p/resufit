@@ -213,6 +213,56 @@ describe("Gemini provider", () => {
     expect(String(calls[1][0])).toContain("gemini-test-fallback");
   });
 
+  it("skips an unavailable model while falling back after quota exhaustion", async () => {
+    vi.stubEnv(
+      "GEMINI_FALLBACK_MODELS",
+      "retired-fallback-model,available-fallback-model",
+    );
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    const dailyLimitResponse = () =>
+      Response.json(
+        {
+          error: {
+            details: [
+              {
+                violations: [{ quotaId: "GenerateRequestsPerDayPerProject" }],
+              },
+            ],
+          },
+        },
+        { status: 429 },
+      );
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(dailyLimitResponse())
+      .mockResolvedValueOnce(
+        Response.json(
+          { error: { message: "Model unavailable to new users." } },
+          { status: 404 },
+        ),
+      )
+      .mockResolvedValueOnce(successfulResponse('{"name":"Ada"}'))
+      .mockResolvedValueOnce(successfulResponse('{"name":"Grace"}'));
+
+    const generate = () =>
+      generateWithGemini({
+        prompt: "prompt",
+        schema,
+        userMessage: "text",
+      });
+    await expect(generate()).resolves.toBe('{"name":"Ada"}');
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(errorLog).toHaveBeenCalledWith("Gemini model unavailable:", {
+      model: "retired-fallback-model",
+      reason: "model unavailable",
+    });
+
+    await expect(generate()).resolves.toBe('{"name":"Grace"}');
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(String(vi.mocked(fetch).mock.calls[3][0])).toContain(
+      "available-fallback-model",
+    );
+  });
+
   it("throws the daily-limit error when all models are exhausted and skips them next time", async () => {
     vi.stubEnv("GEMINI_FALLBACK_MODELS", "gemini-daily-fallback");
     const dailyLimitResponse = () =>

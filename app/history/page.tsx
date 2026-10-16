@@ -88,6 +88,7 @@ export default function HistoryPage() {
               job={selectedEntry.result.job}
               match={selectedEntry.result.match}
               rewrites={selectedEntry.result.rewrites}
+              coverLetter={selectedEntry.result.coverLetter}
             />
           </div>
         ) : entries.length === 0 ? (
