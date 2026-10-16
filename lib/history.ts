@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   JobRequirementsSchema,
   MatchResultSchema,
+  InterviewPrepResultSchema,
   ResumeSchema,
   type AnalysisResult,
 } from "@/lib/schemas";
@@ -27,6 +28,7 @@ const analysisResultSchema = z.object({
     }),
   ).optional(),
   coverLetter: z.string().optional(),
+  interviewPrep: InterviewPrepResultSchema.optional(),
 });
 
 export const HistoryEntrySchema = z.object({

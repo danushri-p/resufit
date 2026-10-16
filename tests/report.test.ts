@@ -62,4 +62,37 @@ describe("buildMarkdownReport", () => {
     expect(report).toContain("## Cover letter");
     expect(report).toContain("My edited cover letter.");
   });
+
+  it("includes an interview prep section when questions exist", () => {
+    const match: MatchResult = {
+      score: 82,
+      label: "Strong match",
+      matchedMustHave: [],
+      missingMustHave: [],
+      matchedNiceToHave: [],
+      missingNiceToHave: [],
+      suggestions: [],
+      ats: { score: 75, checks: [] },
+    };
+    const report = buildMarkdownReport({
+      fileName: "resume.pdf",
+      resume: makeResume(),
+      job: makeJob(),
+      match,
+      interviewPrep: {
+        questions: [{
+          category: "technical",
+          question: "How did you use React?",
+          whyAsked: "The interviewer wants to understand your experience.",
+          answerOutline: ["Discuss the project.", "Explain what you contributed."],
+          basedOn: "Planner",
+        }],
+        warnings: [],
+      },
+    });
+
+    expect(report).toContain("## Interview prep");
+    expect(report).toContain("How did you use React?");
+    expect(report).toContain("**Based on:** Planner");
+  });
 });

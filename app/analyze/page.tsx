@@ -16,21 +16,23 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   JobRequirementsSchema,
+  InterviewPrepResultSchema,
   MatchResultSchema,
   ResumeSchema,
+  type InterviewPrepResult,
   type JobRequirements,
   type MatchResult,
   type ProjectBulletRewrites,
   type Resume,
 } from "@/lib/schemas";
-import { buildMarkdownReport } from "@/lib/report";
+import { buildInterviewPrepMarkdown, buildMarkdownReport } from "@/lib/report";
 import { saveHistoryEntry, updateHistoryEntry } from "@/lib/history";
 import { ProviderFooter } from "@/components/ProviderFooter";
 import { readApiResponse } from "@/lib/apiResponse";
 import { sampleJobDescription, sampleResumeText } from "@/lib/samples";
 
 const MIN_JOB_TEXT_LENGTH = 50;
-type RateLimitedAction = "analyze" | "rewrite" | "cover-letter";
+type RateLimitedAction = "analyze" | "rewrite" | "cover-letter" | "interview-prep";
 type CoverLetterTone = "professional" | "friendly";
 
 interface ExtractionResult {
@@ -205,6 +207,11 @@ export default function AnalyzePage() {
     useState<CoverLetterTone>("professional");
   const [isWritingCoverLetter, setIsWritingCoverLetter] = useState(false);
   const [coverLetterError, setCoverLetterError] = useState<string>();
+  const [interviewPrep, setInterviewPrep] = useState<InterviewPrepResult>();
+  const [interviewPrepError, setInterviewPrepError] = useState<string>();
+  const [isPreparingInterview, setIsPreparingInterview] = useState(false);
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
+  const [shownOutlines, setShownOutlines] = useState<Set<string>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
@@ -222,10 +229,16 @@ export default function AnalyzePage() {
   const analysisRequestId = useRef(0);
   const rewriteRequestId = useRef(0);
   const coverLetterRequestId = useRef(0);
+  const interviewPrepRequestId = useRef(0);
   const historyId = useRef<string | undefined>(undefined);
   const resultsHeading = useRef<HTMLHeadingElement>(null);
   const isBusy =
-    isUploading || isAnalyzing || isMatching || isRewriting || isWritingCoverLetter;
+    isUploading ||
+    isAnalyzing ||
+    isMatching ||
+    isRewriting ||
+    isWritingCoverLetter ||
+    isPreparingInterview;
   const isRetryCooldownActive = retryCountdown > 0;
 
   const canAnalyze =
@@ -334,6 +347,7 @@ export default function AnalyzePage() {
           ats: parsedMatch.ats,
           rewrites,
           coverLetter: coverLetter || undefined,
+          interviewPrep,
         },
       });
       historyId.current = savedHistoryId;
@@ -367,8 +381,10 @@ export default function AnalyzePage() {
               else void handleAnalyze();
             } else if (action === "rewrite") {
               void handleRewriteBullets();
-            } else {
+            } else if (action === "cover-letter") {
               void handleWriteCoverLetter(true);
+            } else {
+              void handleInterviewPrep(true);
             }
           }}
         >
@@ -387,6 +403,7 @@ export default function AnalyzePage() {
     analysisRequestId.current += 1;
     rewriteRequestId.current += 1;
     coverLetterRequestId.current += 1;
+    interviewPrepRequestId.current += 1;
     setResume(upload);
     setResult(undefined);
     setMatch(undefined);
@@ -394,6 +411,11 @@ export default function AnalyzePage() {
     setCoverLetter("");
     setCoverLetterWarnings([]);
     setCoverLetterError(undefined);
+    setInterviewPrep(undefined);
+    setInterviewPrepError(undefined);
+    setIsPreparingInterview(false);
+    setIsPracticeMode(false);
+    setShownOutlines(new Set());
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
@@ -410,6 +432,7 @@ export default function AnalyzePage() {
     analysisRequestId.current += 1;
     rewriteRequestId.current += 1;
     coverLetterRequestId.current += 1;
+    interviewPrepRequestId.current += 1;
     setResume(undefined);
     setJobText("");
     setResult(undefined);
@@ -418,6 +441,11 @@ export default function AnalyzePage() {
     setCoverLetter("");
     setCoverLetterWarnings([]);
     setCoverLetterError(undefined);
+    setInterviewPrep(undefined);
+    setInterviewPrepError(undefined);
+    setIsPreparingInterview(false);
+    setIsPracticeMode(false);
+    setShownOutlines(new Set());
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
@@ -450,6 +478,7 @@ export default function AnalyzePage() {
     const requestId = ++analysisRequestId.current;
     rewriteRequestId.current += 1;
     coverLetterRequestId.current += 1;
+    interviewPrepRequestId.current += 1;
     setIsAnalyzing(true);
     setResult(undefined);
     setMatch(undefined);
@@ -457,6 +486,11 @@ export default function AnalyzePage() {
     setCoverLetter("");
     setCoverLetterWarnings([]);
     setCoverLetterError(undefined);
+    setInterviewPrep(undefined);
+    setInterviewPrepError(undefined);
+    setIsPreparingInterview(false);
+    setIsPracticeMode(false);
+    setShownOutlines(new Set());
     setError(undefined);
     setMatchError(undefined);
     setRewriteError(undefined);
@@ -573,6 +607,7 @@ export default function AnalyzePage() {
           ats: match.ats,
           rewrites: parsedRewrites,
           coverLetter: coverLetter || undefined,
+          interviewPrep,
         });
       }
     } catch (rewriteFailure) {
@@ -652,6 +687,7 @@ export default function AnalyzePage() {
           ats: match.ats,
           rewrites,
           coverLetter: payload.letter,
+          interviewPrep,
         });
       }
     } catch (failure) {
@@ -677,8 +713,116 @@ export default function AnalyzePage() {
         ats: match.ats,
         rewrites,
         coverLetter: value,
+        interviewPrep,
       });
     }
+  }
+
+  async function handleInterviewPrep(retrying = false) {
+    if (
+      !result ||
+      !match ||
+      isPreparingInterview ||
+      (retryCountdown > 0 && !retrying)
+    ) {
+      return;
+    }
+
+    clearRateLimitCooldown();
+    const requestId = ++interviewPrepRequestId.current;
+    setIsPreparingInterview(true);
+    setInterviewPrepError(undefined);
+
+    try {
+      const response = await fetch("/api/interview-prep", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resume: result.resume,
+          job: result.job,
+          match,
+        }),
+      });
+      const payload = await readApiResponse(response);
+      if (requestId !== interviewPrepRequestId.current) return;
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          startRateLimitCooldown(
+            "interview-prep",
+            getRetryAfterSeconds(payload),
+          );
+        }
+        throw new Error(
+          getApiError(payload) ?? "Could not prepare interview questions.",
+        );
+      }
+
+      const parsedPrep = InterviewPrepResultSchema.safeParse(payload);
+      if (!parsedPrep.success) {
+        throw new Error("The server returned interview prep in an unexpected format.");
+      }
+
+      setInterviewPrep(parsedPrep.data);
+      setIsPracticeMode(false);
+      setShownOutlines(new Set());
+      if (historyId.current) {
+        updateHistoryEntry(historyId.current, {
+          ...result,
+          match,
+          ats: match.ats,
+          rewrites,
+          coverLetter: coverLetter || undefined,
+          interviewPrep: parsedPrep.data,
+        });
+      }
+    } catch (failure) {
+      if (requestId !== interviewPrepRequestId.current) return;
+      setInterviewPrepError(
+        failure instanceof Error
+          ? failure.message
+          : "Could not prepare interview questions. Please try again.",
+      );
+    } finally {
+      if (requestId === interviewPrepRequestId.current) {
+        setIsPreparingInterview(false);
+      }
+    }
+  }
+
+  function updateShownOutline(id: string) {
+    setShownOutlines((current) => {
+      const updated = new Set(current);
+      if (updated.has(id)) updated.delete(id);
+      else updated.add(id);
+      return updated;
+    });
+  }
+
+  async function copyInterviewPrep() {
+    if (!interviewPrep) return;
+    try {
+      await navigator.clipboard.writeText(
+        `# Interview prep\n\n${buildInterviewPrepMarkdown(interviewPrep)}`,
+      );
+      setInterviewPrepError(undefined);
+    } catch {
+      setInterviewPrepError("Could not copy the interview prep to the clipboard.");
+    }
+  }
+
+  function downloadInterviewPrep() {
+    if (!interviewPrep) return;
+    const blob = new Blob(
+      [`# Interview prep\n\n${buildInterviewPrepMarkdown(interviewPrep)}`],
+      { type: "text/markdown;charset=utf-8" },
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "resufit-interview-prep.md";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   async function copyCoverLetter() {
@@ -723,6 +867,7 @@ export default function AnalyzePage() {
       match,
       rewrites,
       coverLetter: coverLetter || undefined,
+      interviewPrep,
     });
     const jobSlug =
       (result.job.jobTitle ?? "job")
@@ -844,6 +989,7 @@ export default function AnalyzePage() {
                 analysisRequestId.current += 1;
                 rewriteRequestId.current += 1;
                 coverLetterRequestId.current += 1;
+                interviewPrepRequestId.current += 1;
                 setJobText(event.target.value);
                 setResult(undefined);
                 setMatch(undefined);
@@ -851,6 +997,11 @@ export default function AnalyzePage() {
                 setCoverLetter("");
                 setCoverLetterWarnings([]);
                 setCoverLetterError(undefined);
+                setInterviewPrep(undefined);
+                setInterviewPrepError(undefined);
+                setIsPreparingInterview(false);
+                setIsPracticeMode(false);
+                setShownOutlines(new Set());
                 setIsAnalyzing(false);
                 setIsMatching(false);
                 setIsRewriting(false);
@@ -1030,6 +1181,166 @@ export default function AnalyzePage() {
                     </div>
                     <p className="text-sm text-stone-600">
                       Review and personalise before sending. ResuFit only uses facts from your resume.
+                    </p>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Interview prep</CardTitle>
+                <CardDescription>
+                  Practise honest answers for this role using your resume.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!interviewPrep && (
+                  <Button
+                    type="button"
+                    disabled={isBusy || retryCountdown > 0}
+                    onClick={() => void handleInterviewPrep()}
+                  >
+                    {isPreparingInterview
+                      ? "Preparing interview questions…"
+                      : "Prepare for interview"}
+                  </Button>
+                )}
+                {isPreparingInterview && (
+                  <p className="text-sm text-indigo-700" role="status">
+                    Preparing interview questions based on your resume…
+                  </p>
+                )}
+                {interviewPrepError && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-red-700" role="alert">
+                      {interviewPrepError}
+                    </p>
+                    {rateLimitRetryButton("interview-prep")}
+                  </div>
+                )}
+                {interviewPrep && (
+                  <>
+                    {interviewPrep.warnings.length > 0 && (
+                      <div
+                        className="rounded-md bg-stone-100 p-3 text-sm text-stone-700"
+                        role="status"
+                      >
+                        <p className="font-medium">Accuracy notes</p>
+                        <ul className="mt-1 list-disc pl-5">
+                          {interviewPrep.warnings.map((warning, index) => (
+                            <li key={`${warning}-${index}`}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isBusy}
+                        aria-pressed={isPracticeMode}
+                        onClick={() => {
+                          setIsPracticeMode((current) => !current);
+                          setShownOutlines(new Set());
+                        }}
+                      >
+                        Practice mode {isPracticeMode ? "on" : "off"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isBusy}
+                        onClick={() => void copyInterviewPrep()}
+                      >
+                        Copy all
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isBusy}
+                        onClick={downloadInterviewPrep}
+                      >
+                        Download .md
+                      </Button>
+                    </div>
+                    <div className="space-y-5">
+                      {(
+                        [
+                          ["technical", "Technical"],
+                          ["gap", "Skill gaps"],
+                          ["project", "Your projects"],
+                          ["behavioral", "Behavioral"],
+                        ] as const
+                      ).map(([category, title]) => {
+                        const questions = interviewPrep.questions.filter(
+                          (question) => question.category === category,
+                        );
+                        if (!questions.length) return null;
+                        return (
+                          <section key={category} className="space-y-3">
+                            <h3 className="font-medium text-stone-900">{title}</h3>
+                            <div className="space-y-2">
+                              {questions.map((question, index) => {
+                                const outlineId = `${category}-${index}`;
+                                const showOutline =
+                                  !isPracticeMode || shownOutlines.has(outlineId);
+                                return (
+                                  <details
+                                    key={`${outlineId}-${question.question}`}
+                                    className="rounded-lg border border-stone-200 bg-white p-3"
+                                  >
+                                    <summary className="cursor-pointer font-medium text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-700">
+                                      {question.question}
+                                    </summary>
+                                    <div className="mt-3 space-y-3 text-sm text-stone-700">
+                                      <p>
+                                        <span className="font-medium text-stone-900">
+                                          Why they ask:
+                                        </span>{" "}
+                                        {question.whyAsked}
+                                      </p>
+                                      {question.basedOn && (
+                                        <p>
+                                          <span className="inline-flex rounded-full bg-cyan-100 px-2 py-1 text-xs font-medium text-cyan-950">
+                                            Based on: {question.basedOn}
+                                          </span>
+                                        </p>
+                                      )}
+                                      {showOutline ? (
+                                        <ul className="list-disc space-y-1 pl-5">
+                                          {question.answerOutline.map(
+                                            (point, pointIndex) => (
+                                              <li key={`${point}-${pointIndex}`}>
+                                                {point}
+                                              </li>
+                                            ),
+                                          )}
+                                        </ul>
+                                      ) : (
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="outline"
+                                          disabled={isBusy}
+                                          onClick={() =>
+                                            updateShownOutline(outlineId)
+                                          }
+                                        >
+                                          Show outline
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </details>
+                                );
+                              })}
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+                    <p className="text-sm text-stone-600">
+                      Outlines use only facts from your resume. Practise saying
+                      them in your own words.
                     </p>
                   </>
                 )}

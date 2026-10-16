@@ -76,6 +76,23 @@ export const CoverLetterSchema = z.object({
   closing: z.string(),
 });
 
+export const InterviewQuestionSchema = z.object({
+  category: z.enum(["technical", "gap", "project", "behavioral"]),
+  question: z.string(),
+  whyAsked: z.string(),
+  answerOutline: z.array(z.string()).min(2).max(4),
+  basedOn: z.string().nullable(),
+});
+
+export const InterviewPrepSchema = z.object({
+  questions: z.array(InterviewQuestionSchema).min(8).max(10),
+});
+
+export const InterviewPrepResultSchema = z.object({
+  questions: z.array(InterviewQuestionSchema).min(5).max(10),
+  warnings: z.array(z.string()),
+});
+
 export const MatchResultSchema = z.object({
   score: z.number().int().min(0).max(100),
   label: z.enum(["Strong match", "Good match", "Partial match", "Weak match"]),
@@ -104,6 +121,8 @@ export type BulletRewrite = z.infer<
   typeof BulletRewritesSchema
 >["rewrites"][number];
 export type CoverLetter = z.infer<typeof CoverLetterSchema>;
+export type InterviewPrep = z.infer<typeof InterviewPrepSchema>;
+export type InterviewPrepResult = z.infer<typeof InterviewPrepResultSchema>;
 export interface ProjectBulletRewrites {
   projectName: string;
   rewrites: BulletRewrite[];
@@ -116,4 +135,5 @@ export type AnalysisResult = {
   ats: AtsResult;
   rewrites?: ProjectBulletRewrites[];
   coverLetter?: string;
+  interviewPrep?: InterviewPrepResult;
 };

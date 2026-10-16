@@ -30,6 +30,13 @@ test("analysis results have no serious or critical accessibility violations", as
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("interview preparation has no serious or critical accessibility violations", async ({ page }) => {
+  await completeSampleAnalysis(page);
+  await page.getByRole("button", { name: "Prepare for interview" }).click();
+  await expect(page.getByRole("button", { name: "Practice mode off" })).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("history page has no serious or critical accessibility violations", async ({ page }) => {
   await page.goto("/history");
   await expectNoSeriousAccessibilityViolations(page);

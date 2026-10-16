@@ -1,0 +1,89 @@
+{
+  "questions": [
+    {
+      "category": "technical",
+      "question": "How did you build the event discovery experience?",
+      "whyAsked": "The interviewer wants to understand how you implement user-facing features.",
+      "answerOutline": [
+        "Describe the reusable React and TypeScript components in CampusConnect.",
+        "Explain how users can discover, filter, and register for events."
+      ],
+      "basedOn": "CampusConnect"
+    },
+    {
+      "category": "technical",
+      "question": "How did you connect the application to its APIs?",
+      "whyAsked": "The interviewer wants to understand your backend integration experience.",
+      "answerOutline": [
+        "Discuss the REST endpoints built with Node.js and Express.",
+        "Explain how the endpoints manage events and participant records."
+      ],
+      "basedOn": "CampusConnect"
+    },
+    {
+      "category": "technical",
+      "question": "How did you work with persistent data?",
+      "whyAsked": "The interviewer wants to learn how you model and validate application data.",
+      "answerOutline": [
+        "Describe PostgreSQL data models for event details.",
+        "Mention validation for attendance limits and registration status."
+      ],
+      "basedOn": "CampusConnect"
+    },
+    {
+      "category": "technical",
+      "question": "How did you make the room finder easier to use?",
+      "whyAsked": "The interviewer wants to learn how you handle search and filtering.",
+      "answerOutline": [
+        "Describe searchable room listings.",
+        "Explain the filters for building, capacity, equipment, and available time."
+      ],
+      "basedOn": "StudySpace"
+    },
+    {
+      "category": "gap",
+      "question": "How would you approach a technology you have not used before?",
+      "whyAsked": "The interviewer wants to understand how you handle a skill gap.",
+      "answerOutline": [
+        "Be clear about the skills you are still learning.",
+        "Connect the gap to related experience from your resume."
+      ],
+      "basedOn": null
+    },
+    {
+      "category": "project",
+      "question": "What was a challenge in CampusConnect?",
+      "whyAsked": "The interviewer wants to understand your contribution and decision-making.",
+      "answerOutline": [
+        "Situation: clubs needed a way to manage events.",
+        "Task: create discovery and registration features.",
+        "Action: build reusable components and supporting endpoints.",
+        "Result: describe the outcome in your own words."
+      ],
+      "basedOn": "CampusConnect"
+    },
+    {
+      "category": "project",
+      "question": "How did you make StudySpace search useful?",
+      "whyAsked": "The interviewer wants to learn how you approach product requirements.",
+      "answerOutline": [
+        "Situation: students needed to find study rooms.",
+        "Task: make rooms searchable by useful criteria.",
+        "Action: add filters and clear loading and error states.",
+        "Result: describe the outcome in your own words."
+      ],
+      "basedOn": "StudySpace"
+    },
+    {
+      "category": "behavioral",
+      "question": "How do you respond to feedback?",
+      "whyAsked": "The interviewer wants to understand how you collaborate and improve.",
+      "answerOutline": [
+        "Use an example from peer feedback on StudySpace.",
+        "Explain how feedback informed your work."
+      ],
+      "basedOn": "StudySpace"
+    }
+  ],
+  "warnings": ["Question 2 was adjusted to stay grounded in your resume."]
+}

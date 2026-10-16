@@ -2,9 +2,15 @@ import { expect, type Page } from "@playwright/test";
 import analyzeFixture from "./fixtures/analyze.json";
 import coverLetterFixture from "./fixtures/cover-letter.json";
 import extractFixture from "./fixtures/extract.json";
+import interviewPrepFixture from "./fixtures/interview-prep.json";
 import rewriteFixture from "./fixtures/rewrite.json";
 
-export type AIEndpoint = "extract" | "analyze" | "rewrite" | "cover-letter";
+export type AIEndpoint =
+  | "extract"
+  | "analyze"
+  | "rewrite"
+  | "cover-letter"
+  | "interview-prep";
 
 export interface MockResponse {
   status?: number;
@@ -19,6 +25,7 @@ const fixtureBodies: Record<AIEndpoint, unknown> = {
   analyze: analyzeFixture,
   rewrite: rewriteFixture,
   "cover-letter": coverLetterFixture,
+  "interview-prep": interviewPrepFixture,
 };
 
 export async function mockAI(

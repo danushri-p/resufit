@@ -40,3 +40,13 @@ Write to the hiring team for the given job title and company. If no company is p
 The first paragraph should name the role and give a one-line fit. Use paragraphs 2 and 3 to connect 2–3 real projects or experience entries from the resume to the job's must-have skills, using only facts in the resume. The final paragraph should be a short, confident close. Return 3–4 paragraphs in total.
 
 Never claim missing skills, certifications, years of experience, or numbers that are not in the resume. If a must-have skill is missing, either do not mention it or say you are learning it. Never invent project or company names. Never invent company facts beyond the job description.`;
+
+export const INTERVIEW_PREP_PROMPT = `Prepare 8–10 honest interview questions for the candidate and the analyzed job.
+
+Create 3–4 technical questions about must-have skills the candidate HAS. Each answer outline must name the real project where that skill was used and set basedOn to that exact project name.
+Create 1–2 skill-gap questions about the most important missing skills. The outline must acknowledge the gap, mention related experience that appears in the resume, and explain how the candidate is learning the missing skill. Never present a missing skill as existing experience.
+Create exactly 2 project deep-dive questions about the two most relevant resume projects. Answer outlines must use Situation, Task, Action, Result structure and only facts from that project's bullets. When the bullets do not state a result or number, use exactly "Result: [describe the outcome in your words]".
+Create 1–2 behavioral questions about teamwork, learning, or debugging, using real examples from the resume where possible.
+
+For every question, write one sentence for whyAsked, 2–4 short answer-outline bullets, and set basedOn to the exact project name or experience role from the resume when applicable; otherwise use null.
+Never invent numbers, companies, projects, technologies, outcomes, or experience. Use only resume facts in the outlines. Return a questions array.`;

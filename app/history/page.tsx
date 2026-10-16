@@ -93,6 +93,7 @@ export default function HistoryPage() {
               match={selectedEntry.result.match}
               rewrites={selectedEntry.result.rewrites}
               coverLetter={selectedEntry.result.coverLetter}
+              interviewPrep={selectedEntry.result.interviewPrep}
             />
           </div>
         ) : entries.length === 0 ? (
