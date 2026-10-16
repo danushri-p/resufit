@@ -99,3 +99,5 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 5:** Add ATS checks and browser-local history.
 - **Day 6:** Add Gemini, deployment configuration, and public-site safeguards.
 - **Day 7:** Polish sample flow, landing page, error states, metadata, and CI.
+
+
