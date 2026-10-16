@@ -94,4 +94,60 @@ describe("history", () => {
     expect(() => deleteHistoryEntry("id")).not.toThrow();
     expect(() => clearHistory()).not.toThrow();
   });
+
+  it("saves and reads a comparison entry without changing analysis entries", () => {
+    const comparisonId = saveHistoryEntry({
+      type: "comparison",
+      fileName: "resume.pdf",
+      jobTitle: "Comparison (2 jobs)",
+      company: "",
+      matchScore: 80,
+      atsScore: 75,
+      comparison: {
+        resume: makeResume(),
+        jobs: [
+          {
+            index: 0,
+            job: makeJob({ jobTitle: "Frontend Engineer" }),
+            match: {
+              score: 80,
+              label: "Strong match",
+              matchedMustHave: [],
+              missingMustHave: [],
+              matchedNiceToHave: [],
+              missingNiceToHave: [],
+              suggestions: [],
+              ats: emptyAts,
+            },
+            atsKeywordCoverage: 80,
+          },
+          {
+            index: 1,
+            job: makeJob({ jobTitle: "Backend Engineer" }),
+            match: {
+              score: 60,
+              label: "Good match",
+              matchedMustHave: [],
+              missingMustHave: [],
+              matchedNiceToHave: [],
+              missingNiceToHave: [],
+              suggestions: [],
+              ats: emptyAts,
+            },
+            atsKeywordCoverage: 60,
+          },
+        ],
+        skillGaps: [],
+      },
+    });
+    const oldEntryId = saveHistoryEntry(historyInput(8));
+    const entries = listHistoryEntries();
+
+    expect(getHistoryEntry(comparisonId!)).toMatchObject({
+      type: "comparison",
+    });
+    expect(entries.some((entry) => entry.id === oldEntryId && !("type" in entry)))
+      .toBe(true);
+    expect(entries).toHaveLength(2);
+  });
 });

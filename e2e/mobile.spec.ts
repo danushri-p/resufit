@@ -10,10 +10,17 @@ test("landing, results, and history fit a 375px viewport without horizontal scro
   await page.goto("/");
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
 
+  await page.goto("/compare");
+  await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Comparison results" })).toBeVisible();
+  await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+
   await completeSampleAnalysis(page);
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
 
   await page.goto("/history");
-  await expect(page.getByText("1 saved analysis")).toBeVisible();
+  await expect(page.getByText("2 saved analyses")).toBeVisible();
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
 });

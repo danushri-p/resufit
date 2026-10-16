@@ -20,6 +20,7 @@ ResuFit compares a resume with a job description and gives an honest match score
 
 - Upload and preview PDF or DOCX resumes (up to 5 MB), or try fictional sample data.
 - Compare resume skills and experience against a job with a deterministic match score.
+- Compare one resume against up to three jobs, ranked by match, with shared skill gaps.
 - Review tailored suggestions and ATS checks.
 - Rewrite project bullets with checks against unsupported facts and technologies.
 - Generate a tailored, editable cover letter using only resume facts.
@@ -107,6 +108,7 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 ## Limitations
 
 - The free Gemini tier has rate limits per Google project. Fallback models have their own model quotas, but all models still share the project's overall limits. Use different keys/projects for local testing and the live site if both are used heavily.
+- Compare jobs normally uses 1 AI request for resume extraction plus 1 per job description (3–4 total for 2–3 jobs), or 0 additional requests when each extraction is cached.
 - Analyze normally uses 2 Gemini requests (combined resume/job extraction and suggestions); Improve bullets normally uses 1. A rate-limit fallback can add model requests. ResuFit caches successful AI results in memory for up to one hour per serverless instance, so cache hits are not shared between instances.
 - Write cover letter normally uses 1 AI request, or 0 when the result is cached. Google retires model names over time, so the configured fallback includes the `gemini-flash-lite-latest` alias.
 - Prepare for interview normally uses 1 AI request, or 0 when the result is cached. Interview outlines are suggestions for practice, not scripts; answer in your own words.
@@ -127,3 +129,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 8:** Add honest, tailored cover letter generation.
 - **Day 9:** Add Playwright end-to-end tests, axe accessibility checks, and generated README screenshots.
 - **Day 10:** Add honest interview preparation with guarded, resume-based answer outlines.
+- **Day 11:** Compare one resume against up to three jobs and identify shared skill gaps.

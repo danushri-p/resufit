@@ -3,6 +3,7 @@ import type {
   MatchResult,
   ProjectBulletRewrites,
   InterviewPrepResult,
+  CompareResult,
   Resume,
 } from "@/lib/schemas";
 
@@ -48,6 +49,44 @@ export function buildInterviewPrepMarkdown(
       ? ["## Accuracy notes", ...interviewPrep.warnings.map((warning) => `- ${warning}`)]
       : []),
   ].join("\n\n");
+}
+
+export function buildComparisonMarkdown(
+  fileName: string,
+  comparison: CompareResult,
+): string {
+  const rankedJobs = comparison.jobs
+    .filter((entry) => entry.job && entry.match)
+    .sort((first, second) => second.match!.score - first.match!.score);
+  const tableRows = rankedJobs.map((entry, index) => {
+    const jobTitle = entry.job?.jobTitle ?? `Job ${entry.index + 1}`;
+    const company = entry.job?.company ?? "";
+    const mustHaveCount = entry.job?.mustHaveSkills.length ?? 0;
+    const matchedCount = entry.match?.matchedMustHave.length ?? 0;
+    return `| ${index + 1} | ${jobTitle.replace(/\|/g, "\\|")} | ${company.replace(/\|/g, "\\|")} | ${entry.match?.score ?? 0}/100 | ${matchedCount}/${mustHaveCount} | ${entry.atsKeywordCoverage ?? 0}% |`;
+  });
+  const failures = comparison.jobs
+    .filter((entry) => entry.error)
+    .map((entry) => `- Job ${entry.index + 1}: ${entry.error}`);
+  const gaps = comparison.skillGaps.length
+    ? comparison.skillGaps.map(
+        (gap) =>
+          `- ${gap.skill} — missing in ${gap.missingIn} of ${rankedJobs.length} jobs${gap.jobTitles.length ? ` (${gap.jobTitles.join(", ")})` : ""}`,
+      )
+    : ["- No missing must-have skills across the compared jobs."];
+
+  return [
+    "# Job comparison",
+    `Resume: ${fileName}`,
+    "",
+    "| Rank | Job | Company | Match | Must-have coverage | ATS keyword coverage |",
+    "| ---: | --- | --- | ---: | ---: | ---: |",
+    ...tableRows,
+    ...(failures.length ? ["", "## Jobs that could not be analyzed", ...failures] : []),
+    "",
+    "## Skills to learn next",
+    ...gaps,
+  ].join("\n");
 }
 
 function skillList(skills: string[]): string {
