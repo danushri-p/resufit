@@ -68,7 +68,7 @@ export function getAIError(error: unknown, action: string): {
       message: isOllama()
         ? `Ollama could not complete the ${action} request. Check that the local Ollama service is running and try again.`
         : error.message,
-      status: 502,
+      status: !isOllama() && error.status === 503 ? 503 : 502,
     };
   }
 

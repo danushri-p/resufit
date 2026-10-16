@@ -6,6 +6,7 @@ import {
   generateStructured,
 } from "@/lib/ai/client";
 import { getGeminiModel, generateWithGemini } from "@/lib/ai/gemini";
+import { getAIError } from "@/lib/ai/routeErrors";
 import { extractBoth } from "@/lib/ai/extractBoth";
 import type { Extraction } from "@/lib/schemas";
 
@@ -211,6 +212,72 @@ describe("Gemini provider", () => {
     expect(calls).toHaveLength(2);
     expect(String(calls[0][0])).toContain(getGeminiModel());
     expect(String(calls[1][0])).toContain("gemini-test-fallback");
+  });
+
+  it("falls back after a temporary Gemini server error", async () => {
+    const fallbackModel = `gemini-busy-fallback-${modelNumber}`;
+    vi.stubEnv("GEMINI_FALLBACK_MODELS", fallbackModel);
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(successfulResponse('{"name":"Ada"}'));
+
+    await expect(
+      generateWithGemini({
+        prompt: "prompt",
+        schema,
+        userMessage: "text",
+      }),
+    ).resolves.toBe('{"name":"Ada"}');
+
+    const calls = vi.mocked(fetch).mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(String(calls[0][0])).toContain(getGeminiModel());
+    expect(String(calls[1][0])).toContain(fallbackModel);
+    expect(errorLog).toHaveBeenCalledWith(
+      "Gemini model temporarily unavailable:",
+      { model: getGeminiModel(), status: 503 },
+    );
+  });
+
+  it("returns a 503 busy error when all Gemini models are temporarily unavailable", async () => {
+    const fallbackModel = `gemini-all-busy-fallback-${modelNumber}`;
+    vi.stubEnv("GEMINI_FALLBACK_MODELS", fallbackModel);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 502 }));
+
+    const request = () =>
+      generateWithGemini({
+        prompt: "prompt",
+        schema,
+        userMessage: "text",
+      });
+
+    await expect(request()).rejects.toMatchObject({
+      constructor: AIRequestError,
+      status: 503,
+      message: "The AI service is busy right now. Please try again in a moment.",
+    });
+    expect(getAIError(
+      new AIRequestError(
+        503,
+        "The AI service is busy right now. Please try again in a moment.",
+      ),
+      "analysis",
+    )).toMatchObject({
+      status: 503,
+      message: "The AI service is busy right now. Please try again in a moment.",
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+
+    await expect(request()).rejects.toMatchObject({
+      constructor: AIRequestError,
+      status: 503,
+      message: "The AI service is busy right now. Please try again in a moment.",
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("skips an unavailable model while falling back after quota exhaustion", async () => {
