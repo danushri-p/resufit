@@ -66,6 +66,7 @@ export default function ComparePage() {
     { label: "Job 2", text: "" },
   ]);
   const [result, setResult] = useState<CompareResult>();
+  const [comparisonHistoryId, setComparisonHistoryId] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
   const [error, setError] = useState<string>();
@@ -187,6 +188,7 @@ export default function ComparePage() {
         atsScore: bestMatch?.ats.score ?? 0,
         comparison: parsed.data,
       });
+      setComparisonHistoryId(savedId ?? null);
       if (!savedId) {
         setError("Comparison completed, but it could not be saved to browser history.");
       }
@@ -261,6 +263,12 @@ export default function ComparePage() {
               className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
             >
               History
+            </Link>
+            <Link
+              href="/tracker"
+              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              Tracker
             </Link>
           </nav>
         </header>
@@ -433,6 +441,7 @@ export default function ComparePage() {
               result={result}
               labels={jobs.map((job) => job.label)}
               onOpenFullAnalysis={openFullAnalysis}
+              trackHistoryId={comparisonHistoryId}
             />
           </section>
         )}

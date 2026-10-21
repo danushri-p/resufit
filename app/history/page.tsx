@@ -28,6 +28,9 @@ export default function HistoryPage() {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       setEntries(listHistoryEntries());
+      const openId = new URLSearchParams(window.location.search).get("open");
+      const requested = openId ? getHistoryEntry(openId) : undefined;
+      if (requested) setSelectedEntry(requested);
       setIsLoading(false);
     }, 0);
     return () => window.clearTimeout(timeout);
@@ -78,6 +81,12 @@ export default function HistoryPage() {
           >
             Compare jobs
           </Link>
+          <Link
+            href="/tracker"
+            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            Tracker
+          </Link>
         </header>
 
         {isLoading ? (
@@ -90,7 +99,14 @@ export default function HistoryPage() {
               <h2 className="text-xl font-semibold text-stone-900">
                 {selectedEntry.jobTitle}
               </h2>
-              <Button type="button" variant="outline" onClick={() => setSelectedEntry(undefined)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSelectedEntry(undefined);
+                  if (window.location.search) window.history.replaceState(null, "", "/history");
+                }}
+              >
                 Back to history
               </Button>
             </div>
