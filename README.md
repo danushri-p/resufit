@@ -27,10 +27,11 @@ ResuFit compares a resume with a job description and gives an honest match score
 - Prepare for interviews with resume-grounded questions and answer outlines.
 - Download a Markdown report.
 - Keep up to ten recent analyses in browser-local history.
+- Track job applications (status, applied and follow-up dates, notes, job link) with a response rate and follow-ups due, export them as CSV, and link each one back to its analysis. Stored only in this browser; uses no AI requests.
 
 ## Privacy
 
-Your resume is sent to the AI provider to generate the analysis and is not stored by ResuFit. On the live site the provider is Google Gemini; on the free tier Google may use submitted content to improve its products, so avoid uploading information you don't want to share. Saved history stays in this browser.
+Your resume is sent to the AI provider to generate the analysis and is not stored by ResuFit. On the live site the provider is Google Gemini; on the free tier Google may use submitted content to improve its products, so avoid uploading information you don't want to share. Saved history and tracked applications stay in this browser.
 
 ## How it works
 
@@ -115,7 +116,7 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - The app also uses a basic in-memory per-IP request limit.
 - Small local models may be less accurate than hosted models.
 - Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
-- Analysis history is stored per browser and is not shared across browsers or devices.
+- Analysis history and tracked applications are stored per browser and are not shared across browsers or devices. Clearing site data deletes them; use Export CSV to keep a copy of your applications.
 
 ## Project timeline
 
@@ -130,3 +131,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 9:** Add Playwright end-to-end tests, axe accessibility checks, and generated README screenshots.
 - **Day 10:** Add honest interview preparation with guarded, resume-based answer outlines.
 - **Day 11:** Compare one resume against up to three jobs and identify shared skill gaps.
+- **Day 12:** Track job applications with statuses, follow-up reminders, CSV export, and links back to saved analyses.

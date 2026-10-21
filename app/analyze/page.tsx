@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { UploadBox, type ResumeUploadResult } from "@/components/UploadBox";
 import { AnalysisCards } from "@/components/results/AnalysisCards";
+import { TrackApplicationButton } from "@/components/TrackApplicationButton";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -231,6 +232,7 @@ export default function AnalyzePage() {
   const coverLetterRequestId = useRef(0);
   const interviewPrepRequestId = useRef(0);
   const historyId = useRef<string | undefined>(undefined);
+  const [savedHistoryId, setSavedHistoryId] = useState<string>();
   const resultsHeading = useRef<HTMLHeadingElement>(null);
   const isBusy =
     isUploading ||
@@ -380,6 +382,7 @@ export default function AnalyzePage() {
         },
       });
       historyId.current = savedHistoryId;
+      setSavedHistoryId(savedHistoryId);
     } catch (matchAnalysisError) {
       if (requestId !== analysisRequestId.current) return;
       setMatchError(
@@ -455,6 +458,7 @@ export default function AnalyzePage() {
     setIsRewriting(false);
     setIsWritingCoverLetter(false);
     historyId.current = undefined;
+    setSavedHistoryId(undefined);
   }
 
   function handleStartOver() {
@@ -487,6 +491,7 @@ export default function AnalyzePage() {
     setCopiedBullet(undefined);
     setUploadBoxKey((key) => key + 1);
     historyId.current = undefined;
+    setSavedHistoryId(undefined);
   }
 
   function loadSample() {
@@ -956,6 +961,12 @@ export default function AnalyzePage() {
           >
             Compare jobs
           </Link>
+          <Link
+            href="/tracker"
+            className="inline-flex rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            Tracker
+          </Link>
         </header>
 
         <nav aria-label="Analysis steps" className="flex flex-wrap items-center gap-2 text-sm">
@@ -1045,6 +1056,7 @@ export default function AnalyzePage() {
                 setMatchError(undefined);
                 setRewriteError(undefined);
                 historyId.current = undefined;
+                setSavedHistoryId(undefined);
               }}
               placeholder="Paste the job description here..."
               rows={8}
@@ -1116,6 +1128,14 @@ export default function AnalyzePage() {
               onRetryMatch={() => void handleRetrySuggestions()}
               onDownload={downloadReport}
               onCopy={(id, content) => void copyBullet(id, content)}
+              extraActions={
+                <TrackApplicationButton
+                  role={result.job.jobTitle}
+                  company={result.job.company}
+                  matchScore={match.score}
+                  historyId={savedHistoryId ?? null}
+                />
+              }
             />
             <Card>
               <CardHeader>

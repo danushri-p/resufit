@@ -1,5 +1,6 @@
 "use client";
 
+import { TrackApplicationButton } from "@/components/TrackApplicationButton";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,12 +15,15 @@ interface ComparisonResultsProps {
   result: CompareResult;
   onOpenFullAnalysis?: (index: number) => void;
   labels?: string[];
+  /** When set (including null), each card shows "Track this application". */
+  trackHistoryId?: string | null;
 }
 
 export function ComparisonResults({
   result,
   onOpenFullAnalysis,
   labels,
+  trackHistoryId,
 }: ComparisonResultsProps) {
   const rankedJobs = [...result.jobs]
     .filter((entry) => entry.job && entry.match)
@@ -107,14 +111,26 @@ export function ComparisonResults({
                     </p>
                   )}
                 </div>
-                {onOpenFullAnalysis && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => onOpenFullAnalysis(entry.index)}
-                  >
-                    Open full analysis
-                  </Button>
+                {(onOpenFullAnalysis || trackHistoryId !== undefined) && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
+                    {onOpenFullAnalysis && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onOpenFullAnalysis(entry.index)}
+                      >
+                        Open full analysis
+                      </Button>
+                    )}
+                    {trackHistoryId !== undefined && (
+                      <TrackApplicationButton
+                        role={job.jobTitle ?? title}
+                        company={job.company}
+                        matchScore={match.score}
+                        historyId={trackHistoryId}
+                      />
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>

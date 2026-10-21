@@ -55,6 +55,27 @@ test("history page has no serious or critical accessibility violations", async (
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("empty tracker has no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/tracker");
+  await expect(page.getByRole("heading", { name: "Track your first application" })).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
+test("tracker with entries and the form open has no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/tracker");
+  await page.getByRole("button", { name: "Add application" }).click();
+  await page.getByLabel("Role", { exact: true }).fill("Frontend Developer");
+  await page.getByLabel("Company", { exact: true }).fill("BrightPath Studio");
+  await page.getByLabel("Status", { exact: true }).selectOption("applied");
+  await page.getByLabel("Follow up on (optional)").fill("2020-01-01");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Follow up due")).toBeVisible();
+  await page.getByRole("button", { name: "Add application" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Enter the role.")).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("not-found page has no serious or critical accessibility violations", async ({ page }) => {
   await page.goto("/does-not-exist");
   await expectNoSeriousAccessibilityViolations(page);

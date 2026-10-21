@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,6 +36,7 @@ interface AnalysisCardsProps {
   onRetryMatch?: () => void;
   onDownload?: () => void;
   onCopy?: (id: string, content: string) => void;
+  extraActions?: ReactNode;
 }
 
 function SkillChips({
@@ -82,6 +84,7 @@ export function AnalysisCards({
   onRetryMatch,
   onDownload,
   onCopy,
+  extraActions,
 }: AnalysisCardsProps) {
   return (
     <section aria-label="Analysis results" className="grid min-w-0 gap-6">
@@ -157,10 +160,11 @@ export function AnalysisCards({
             )}
           </div>
 
-          {(onRewrite || onDownload) && (
-            <div className="flex flex-col gap-3 sm:flex-row">
+          {(onRewrite || onDownload || extraActions) && (
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
               {onRewrite && <Button type="button" disabled={isRewriting || isMatching} onClick={onRewrite}>{isRewriting ? "Improving bullets…" : "Improve bullets"}</Button>}
               {onDownload && <Button type="button" variant="outline" onClick={onDownload}>Download report</Button>}
+              {extraActions}
             </div>
           )}
           {isRewriting && <p className="text-sm text-indigo-700" role="status">Rewriting project bullets…</p>}
