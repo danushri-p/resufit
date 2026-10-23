@@ -19,6 +19,7 @@ ResuFit compares a resume with a job description and gives an honest match score
 ## Features
 
 - Upload and preview PDF or DOCX resumes (up to 5 MB), or try fictional sample data.
+- Light, dark, or system theme (switch at the bottom of every page), remembered in this browser and applied before the page paints. Printed resumes always stay light.
 - Compare resume skills and experience against a job with a deterministic match score.
 - Compare one resume against up to three jobs, ranked by match, with shared skill gaps.
 - Review tailored suggestions and ATS checks.
@@ -122,6 +123,7 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - Analysis history and tracked applications are stored per browser and are not shared across browsers or devices. Clearing site data deletes them; use Export CSV to keep a copy of your applications.
 - Offline support caches only the home page, tracker, history, and pages you have opened. Regenerate the install icons with `node scripts/generate-pwa-icons.mjs` after changing `public/logo.svg`, and bump `CACHE_VERSION` in `public/sw.js` when the caching rules change.
 - The tailored resume is saved only for the current browser tab (session storage) until you print or download it. PDF export uses the browser's print dialog; choose "Save as PDF" and turn off headers and footers.
+- Dark mode mirrors each Tailwind colour ramp in `app/globals.css` (50 ↔ 950, 100 ↔ 900, …), so existing colour classes adapt automatically. Prefer palette classes over hard-coded hex colours in new UI so they adapt too.
 
 ## Project timeline
 
@@ -140,3 +142,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 13:** Make ResuFit an installable app (web app manifest, app icons, service worker) with offline support for the tracker and history.
 - **Day 14:** Back up, restore, and delete all browser-stored data, and export follow-up reminders to calendar apps.
 - **Day 15:** Build a tailored, ATS-friendly resume from approved rewrites and export it as PDF or text.
+- **Day 16:** Add dark mode with a system/light/dark switch, no flash on load, and dark-mode accessibility checks.

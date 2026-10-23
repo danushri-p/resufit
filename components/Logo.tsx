@@ -55,10 +55,8 @@ export function Logo({
           className="whitespace-nowrap font-semibold text-slate-900"
           style={{ fontSize: size * 0.72, letterSpacing: "-0.04em" }}
         >
-          Resu<span style={{ color: "#0E7490" }}>Fit</span>        
-        
+          Resu<span className="text-cyan-700">Fit</span>
         </span>
-
       )}
     </span>
   );
