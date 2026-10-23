@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+import { buildFollowUpIcs, followUpFileName } from "@/lib/calendar";
 import {
   APPLICATION_STATUSES,
   APPLICATION_STATUS_LABELS,
@@ -208,6 +209,18 @@ export default function TrackerPage() {
     refresh();
   }
 
+  function downloadFollowUp(application: Application) {
+    const ics = buildFollowUpIcs(application);
+    if (!ics) return;
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = followUpFileName(application);
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   function downloadCsv() {
     const blob = new Blob([`﻿${exportApplicationsCsv(applications)}`], {
       type: "text/csv;charset=utf-8",
@@ -358,6 +371,9 @@ export default function TrackerPage() {
             </Link>
             <Link href="/history" className={NAV_LINK}>
               History
+            </Link>
+            <Link href="/data" className={NAV_LINK}>
+              Your data
             </Link>
           </nav>
         </header>
@@ -559,6 +575,16 @@ export default function TrackerPage() {
                               >
                                 Open analysis
                               </Link>
+                            )}
+                            {application.followUpOn && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadFollowUp(application)}
+                              >
+                                Add to calendar
+                              </Button>
                             )}
                             <Button type="button" variant="outline" size="sm" onClick={() => openEditForm(application)}>
                               Edit

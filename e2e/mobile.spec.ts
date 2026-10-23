@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { completeSampleAnalysis, horizontalOverflow, mockAI } from "./helpers";
 
-test("landing, results, history, and tracker fit a 375px viewport without horizontal scrolling", async ({
+test("landing, results, history, tracker, and data pages fit a 375px viewport without horizontal scrolling", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
@@ -33,5 +33,9 @@ test("landing, results, history, and tracker fit a 375px viewport without horizo
   await page.getByLabel("Follow up on (optional)").fill("2020-01-01");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Follow up due")).toBeVisible();
+  await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+
+  await page.goto("/data");
+  await expect(page.getByRole("heading", { name: "Your data" })).toBeVisible();
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
 });

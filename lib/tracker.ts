@@ -247,6 +247,28 @@ export function deleteApplication(id: string): void {
   );
 }
 
+/**
+ * Imports already-validated applications. "merge" keeps existing applications and skips
+ * incoming ids that already exist; "replace" discards current applications first. Only
+ * the most recently updated MAX_APPLICATIONS are kept.
+ */
+export function importApplications(
+  incoming: Application[],
+  mode: "merge" | "replace",
+): { imported: number; skipped: number } | undefined {
+  const existing = mode === "merge" ? readApplications() : [];
+  const existingIds = new Set(existing.map((application) => application.id));
+  const fresh = incoming.filter((application) => !existingIds.has(application.id));
+  const kept = [...existing, ...fresh]
+    .sort((first, second) => second.updatedAt.localeCompare(first.updatedAt))
+    .slice(0, MAX_APPLICATIONS);
+  if (!writeApplications(kept)) return undefined;
+
+  const keptIds = new Set(kept.map((application) => application.id));
+  const imported = fresh.filter((application) => keptIds.has(application.id)).length;
+  return { imported, skipped: incoming.length - imported };
+}
+
 export function clearApplications(): void {
   try {
     localStorage.removeItem(APPLICATIONS_KEY);
