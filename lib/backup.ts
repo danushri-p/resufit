@@ -16,7 +16,11 @@ import {
 
 export const BACKUP_VERSION = 1;
 export const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
-const SESSION_KEYS = ["resufit:compare-prefill"];
+const SESSION_KEYS = [
+  "resufit:compare-prefill",
+  "resufit:resume-builder",
+  "resufit:resume-draft",
+];
 
 const BackupFileSchema = z.object({
   app: z.literal("resufit"),

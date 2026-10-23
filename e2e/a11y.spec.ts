@@ -112,6 +112,15 @@ test("data page with a restore preview has no serious or critical accessibility 
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("tailored resume builder has no serious or critical accessibility violations", async ({ page }) => {
+  await completeSampleAnalysis(page);
+  await page.getByRole("button", { name: "Improve bullets" }).click();
+  await expect(page.getByRole("button", { name: "Build tailored resume" })).toBeEnabled();
+  await page.getByRole("button", { name: "Build tailored resume" }).click();
+  await expect(page.getByRole("article", { name: "Resume preview" })).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("not-found page has no serious or critical accessibility violations", async ({ page }) => {
   await page.goto("/does-not-exist");
   await expectNoSeriousAccessibilityViolations(page);

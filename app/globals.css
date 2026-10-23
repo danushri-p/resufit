@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+
+  body {
+    background: white;
+  }
+}

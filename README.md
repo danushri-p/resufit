@@ -23,6 +23,7 @@ ResuFit compares a resume with a job description and gives an honest match score
 - Compare one resume against up to three jobs, ranked by match, with shared skill gaps.
 - Review tailored suggestions and ATS checks.
 - Rewrite project bullets with checks against unsupported facts and technologies.
+- Build a tailored, ATS-friendly one-column resume from your own resume: choose original or improved wording per bullet, reorder projects, put job-matching skills first, edit any text, then save as PDF (browser print) or copy/download plain text. Uses no AI requests and only content from your resume and approved rewrites.
 - Generate a tailored, editable cover letter using only resume facts.
 - Prepare for interviews with resume-grounded questions and answer outlines.
 - Download a Markdown report.
@@ -120,6 +121,7 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
 - Analysis history and tracked applications are stored per browser and are not shared across browsers or devices. Clearing site data deletes them; use Export CSV to keep a copy of your applications.
 - Offline support caches only the home page, tracker, history, and pages you have opened. Regenerate the install icons with `node scripts/generate-pwa-icons.mjs` after changing `public/logo.svg`, and bump `CACHE_VERSION` in `public/sw.js` when the caching rules change.
+- The tailored resume is saved only for the current browser tab (session storage) until you print or download it. PDF export uses the browser's print dialog; choose "Save as PDF" and turn off headers and footers.
 
 ## Project timeline
 
@@ -137,3 +139,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 12:** Track job applications with statuses, follow-up reminders, CSV export, and links back to saved analyses.
 - **Day 13:** Make ResuFit an installable app (web app manifest, app icons, service worker) with offline support for the tracker and history.
 - **Day 14:** Back up, restore, and delete all browser-stored data, and export follow-up reminders to calendar apps.
+- **Day 15:** Build a tailored, ATS-friendly resume from approved rewrites and export it as PDF or text.
