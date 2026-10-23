@@ -125,3 +125,46 @@ test("not-found page has no serious or critical accessibility violations", async
   await page.goto("/does-not-exist");
   await expectNoSeriousAccessibilityViolations(page);
 });
+
+test.describe("dark mode", () => {
+  test.use({ colorScheme: "dark" });
+
+  test("landing, tracker and data pages have no serious or critical violations", async ({ page }) => {
+    await page.goto("/");
+    await expect.poll(() => page.evaluate(() => document.documentElement.classList.contains("dark"))).toBe(true);
+    await expectNoSeriousAccessibilityViolations(page);
+
+    await page.goto("/tracker");
+    await page.getByRole("button", { name: "Add application" }).click();
+    await page.getByLabel("Role", { exact: true }).fill("Frontend Developer");
+    await page.getByLabel("Company", { exact: true }).fill("BrightPath Studio");
+    await page.getByLabel("Status", { exact: true }).selectOption("interviewing");
+    await page.getByLabel("Follow up on (optional)").fill("2020-01-01");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText("Follow up due")).toBeVisible();
+    await expectNoSeriousAccessibilityViolations(page);
+
+    await page.goto("/data");
+    await page.getByRole("button", { name: "Delete all data" }).click();
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+
+  test("analysis results, rewrites and the resume builder have no serious or critical violations", async ({ page }) => {
+    await completeSampleAnalysis(page);
+    await page.getByRole("button", { name: "Improve bullets" }).click();
+    await expect(page.getByText(/Rewrites preserve|Kept as is|Improved bullets/).first()).toBeVisible();
+    await expectNoSeriousAccessibilityViolations(page);
+
+    await page.getByRole("button", { name: "Build tailored resume" }).click();
+    await expect(page.getByRole("article", { name: "Resume preview" })).toBeVisible();
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+
+  test("comparison results have no serious or critical violations", async ({ page }) => {
+    await page.goto("/compare");
+    await page.getByRole("button", { name: "Try a sample" }).click();
+    await page.getByRole("button", { name: "Compare", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Comparison results" })).toBeVisible();
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+});
