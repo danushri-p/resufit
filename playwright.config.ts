@@ -7,6 +7,9 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3100",
     trace: "retain-on-failure",
+    // Service workers would let cached pages bypass page.route() mocks; e2e/pwa.spec.ts
+    // opts back in to test offline support.
+    serviceWorkers: "block",
   },
   projects: [
     {
