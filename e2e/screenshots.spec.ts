@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { test } from "@playwright/test";
+import { test, type Page } from "@playwright/test";
+import analyzeFixture from "./fixtures/analyze.json";
 import { mockAI } from "./helpers";
 
 test.skip(
@@ -8,37 +9,110 @@ test.skip(
   "Run this spec explicitly with npm run screenshots.",
 );
 
+const directory = path.join(process.cwd(), "docs", "screenshots");
+
+async function capture(page: Page, name: string, fullPage = false) {
+  // Let fonts and layout settle so screenshots are stable.
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: path.join(directory, `${name}.png`), fullPage });
+}
+
+function isoDate(daysFromToday: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromToday);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+async function addApplication(
+  page: Page,
+  values: { role: string; company: string; status: string; followUpOn?: string; notes?: string },
+) {
+  await page.getByRole("button", { name: "Add application" }).click();
+  await page.getByLabel("Role", { exact: true }).fill(values.role);
+  await page.getByLabel("Company", { exact: true }).fill(values.company);
+  await page.getByLabel("Status", { exact: true }).selectOption(values.status);
+  if (values.followUpOn) await page.getByLabel("Follow up on (optional)").fill(values.followUpOn);
+  if (values.notes) await page.getByLabel("Notes (optional)").fill(values.notes);
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("heading", { name: `${values.role} · ${values.company}` }).waitFor();
+}
+
 test("captures the README screenshots", async ({ page }) => {
-  await mockAI(page);
-  await page.setViewportSize({ width: 1280, height: 900 });
-  const screenshotDirectory = path.join(process.cwd(), "docs", "screenshots");
-  await fs.mkdir(screenshotDirectory, { recursive: true });
+  test.setTimeout(120_000);
+  // Fictional sample data plus two skill gaps so the learning plan has content.
+  await mockAI(page, {
+    analyze: {
+      body: { ...analyzeFixture, missingMustHave: ["Docker"], missingNiceToHave: ["AWS"] },
+    },
+  });
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await fs.mkdir(directory, { recursive: true });
+
+  await page.goto("/");
+  await page.getByRole("heading", { name: "Make your next move count." }).waitFor();
+  await capture(page, "landing");
 
   await page.goto("/analyze?sample=1");
   await page.getByText("Sample data: fictional resume and job description.").waitFor();
-  await page.screenshot({
-    path: path.join(screenshotDirectory, "analyze.png"),
-    fullPage: true,
-  });
-
   await page.getByRole("button", { name: "Analyze", exact: true }).click();
   await page.getByRole("heading", { name: "Results" }).waitFor();
-  await page.screenshot({
-    path: path.join(screenshotDirectory, "results.png"),
-    fullPage: true,
-  });
+  await page.getByRole("button", { name: "Improve bullets" }).click();
+  await page.getByRole("button", { name: "Build tailored resume" }).waitFor();
+  await page
+    .getByRole("heading", { name: "Results" })
+    .evaluate((element) => element.scrollIntoView({ block: "start" }));
+  await capture(page, "results");
 
   await page.getByRole("button", { name: "Write cover letter" }).click();
-  await page.getByLabel("Editable cover letter").waitFor();
-  await page.screenshot({
-    path: path.join(screenshotDirectory, "cover-letter.png"),
-    fullPage: true,
-  });
+  const letter = page.getByLabel("Editable cover letter");
+  await letter.waitFor();
+  await letter.scrollIntoViewIfNeeded();
+  await capture(page, "cover-letter");
 
-  await page.goto("/history");
-  await page.getByText("1 saved analysis").waitFor();
-  await page.screenshot({
-    path: path.join(screenshotDirectory, "history.png"),
-    fullPage: true,
+  await page.getByRole("button", { name: "Build tailored resume" }).click();
+  await page.getByRole("article", { name: "Resume preview" }).waitFor();
+  await capture(page, "resume");
+
+  await page.goto("/compare");
+  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  const comparison = page.getByRole("heading", { name: "Comparison results" });
+  await comparison.waitFor();
+  await comparison.evaluate((element) => element.scrollIntoView({ block: "start" }));
+  await capture(page, "compare");
+
+  await page.goto("/learn");
+  await page.getByRole("list", { name: "Skills to learn" }).waitFor();
+  // The plan defaults to the newest saved item (the comparison above).
+  await page
+    .getByRole("group", { name: /^Progress for / })
+    .first()
+    .getByRole("button", { name: "Learning" })
+    .click();
+  await capture(page, "learn");
+
+  await page.goto("/tracker");
+  await addApplication(page, {
+    role: "Full-Stack Developer Intern",
+    company: "Northstar Learning Lab",
+    status: "interviewing",
+    followUpOn: isoDate(0),
+    notes: "Technical interview on Friday. Review CampusConnect's API design.",
   });
+  await addApplication(page, {
+    role: "Frontend Developer",
+    company: "BrightPath Studio",
+    status: "applied",
+    followUpOn: isoDate(7),
+  });
+  await addApplication(page, { role: "Backend Developer Intern", company: "Harborlight Systems", status: "saved" });
+  await capture(page, "tracker");
+
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await page.getByRole("heading", { name: "Make your next move count." }).waitFor();
+  await capture(page, "dark");
 });
