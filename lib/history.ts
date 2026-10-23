@@ -86,14 +86,15 @@ function readEntries(): HistoryEntry[] {
   }
 }
 
-function writeEntries(entries: HistoryEntry[]): void {
+function writeEntries(entries: HistoryEntry[]): boolean {
   try {
     localStorage.setItem(
       HISTORY_KEY,
       JSON.stringify(entries.slice(0, MAX_HISTORY_ENTRIES)),
     );
+    return true;
   } catch {
-    return;
+    return false;
   }
 }
 
@@ -148,6 +149,33 @@ export function updateHistoryEntry(
 
 export function deleteHistoryEntry(id: string): void {
   writeEntries(readEntries().filter((entry) => entry.id !== id));
+}
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+}
+
+/**
+ * Imports already-validated entries. "merge" keeps existing entries and skips incoming
+ * ids that already exist; "replace" discards current history first. Only the newest
+ * MAX_HISTORY_ENTRIES are kept either way.
+ */
+export function importHistoryEntries(
+  incoming: HistoryEntry[],
+  mode: "merge" | "replace",
+): ImportResult | undefined {
+  const existing = mode === "merge" ? readEntries() : [];
+  const existingIds = new Set(existing.map((entry) => entry.id));
+  const fresh = incoming.filter((entry) => !existingIds.has(entry.id));
+  const kept = [...existing, ...fresh]
+    .sort((first, second) => second.createdAt.localeCompare(first.createdAt))
+    .slice(0, MAX_HISTORY_ENTRIES);
+  if (!writeEntries(kept)) return undefined;
+
+  const keptIds = new Set(kept.map((entry) => entry.id));
+  const imported = fresh.filter((entry) => keptIds.has(entry.id)).length;
+  return { imported, skipped: incoming.length - imported };
 }
 
 export function clearHistory(): void {

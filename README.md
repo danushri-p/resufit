@@ -29,10 +29,11 @@ ResuFit compares a resume with a job description and gives an honest match score
 - Keep up to ten recent analyses in browser-local history.
 - Track job applications (status, applied and follow-up dates, notes, job link) with a response rate and follow-ups due, export them as CSV, and link each one back to its analysis. Stored only in this browser; uses no AI requests.
 - Install ResuFit as an app on desktop or phone (Install app button in supported browsers, or Add to Home Screen on iOS). The tracker and history keep working offline; AI features need a connection and AI requests are never cached.
+- Back up all saved data to a JSON file and restore it on another browser or device (merge or replace), or delete everything in one step, on the Your data page. Add tracker follow-up dates to any calendar app as an `.ics` file.
 
 ## Privacy
 
-Your resume is sent to the AI provider to generate the analysis and is not stored by ResuFit. On the live site the provider is Google Gemini; on the free tier Google may use submitted content to improve its products, so avoid uploading information you don't want to share. Saved history and tracked applications stay in this browser.
+Your resume is sent to the AI provider to generate the analysis and is not stored by ResuFit. On the live site the provider is Google Gemini; on the free tier Google may use submitted content to improve its products, so avoid uploading information you don't want to share. Saved history and tracked applications stay in this browser; use the Your data page (`/data`) to back them up, restore them, or delete them. Backup files can include details from your resume, so keep them private.
 
 ## How it works
 
@@ -135,3 +136,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 11:** Compare one resume against up to three jobs and identify shared skill gaps.
 - **Day 12:** Track job applications with statuses, follow-up reminders, CSV export, and links back to saved analyses.
 - **Day 13:** Make ResuFit an installable app (web app manifest, app icons, service worker) with offline support for the tracker and history.
+- **Day 14:** Back up, restore, and delete all browser-stored data, and export follow-up reminders to calendar apps.

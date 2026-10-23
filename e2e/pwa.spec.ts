@@ -49,7 +49,7 @@ test("tracker works offline after the first visit", async ({ page, context }) =>
   await context.setOffline(true);
   await page.goto("/tracker");
   await expect(page.getByRole("heading", { name: "Application tracker" })).toBeVisible();
-  await expect(page.getByText(/You're offline\. Your tracker and history still work/)).toBeVisible();
+  await expect(page.getByText(/You're offline\. Your tracker, history and data page still work/)).toBeVisible();
 
   // Fully interactive offline: data is saved in this browser.
   await page.getByRole("button", { name: "Add application" }).click();
@@ -80,5 +80,6 @@ test("unsaved pages show the offline page and AI requests are never cached", asy
     return keys;
   });
   expect(cacheKeys).toContain("/tracker");
+  expect(cacheKeys).toContain("/data");
   expect(cacheKeys.some((path) => path.startsWith("/api/"))).toBe(false);
 });

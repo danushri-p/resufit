@@ -37,6 +37,12 @@ export default function Home() {
           >
             Tracker
           </Link>
+          <Link
+            href="/data"
+            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+          >
+            Your data
+          </Link>
           <InstallAppButton className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700" />
         </header>
 
@@ -110,7 +116,14 @@ export default function Home() {
             is not stored by ResuFit.{" "}
             {isGeminiProvider &&
               "On the live site the provider is Google Gemini; on the free tier Google may use submitted content to improve its products, so avoid uploading information you don't want to share. "}
-            Saved history stays in this browser.
+            Saved history and tracked applications stay in this browser.{" "}
+            <Link
+              href="/data"
+              className="font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              Back up or delete your data
+            </Link>
+            .
           </p>
         </aside>
 

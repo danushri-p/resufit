@@ -13,7 +13,7 @@ test("landing page shows title, navigation, and privacy note", async ({ page }) 
   await expect(landingLogo).toHaveAttribute("href", "/");
   await expect(landingLogo.locator("[aria-label='ResuFit']")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your privacy" })).toBeVisible();
-  await expect(page.getByText(/Saved history stays in this browser/)).toBeVisible();
+  await expect(page.getByText(/Saved history and tracked applications stay in this browser/)).toBeVisible();
   await page.getByRole("link", { name: "Analyze your resume" }).click();
   await expect(page).toHaveURL("/analyze");
   await expect(page.locator("header").getByRole("link", { name: "ResuFit" })).toHaveAttribute(

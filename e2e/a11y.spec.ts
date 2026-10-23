@@ -76,6 +76,42 @@ test("tracker with entries and the form open has no serious or critical accessib
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("data page with a restore preview has no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/data");
+  await expect(page.getByRole("heading", { name: "Your data" })).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+  await page.getByLabel("Backup file").setInputFiles({
+    name: "resufit-backup.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        app: "resufit",
+        version: 1,
+        exportedAt: "2026-10-01T00:00:00.000Z",
+        history: [],
+        applications: [
+          {
+            id: "a1",
+            createdAt: "2026-10-01T00:00:00.000Z",
+            updatedAt: "2026-10-01T00:00:00.000Z",
+            role: "Frontend Developer",
+            company: "BrightPath Studio",
+            status: "saved",
+            appliedOn: null,
+            followUpOn: null,
+            jobUrl: null,
+            notes: "",
+            matchScore: null,
+            historyId: null,
+          },
+        ],
+      }),
+    ),
+  });
+  await expect(page.getByRole("button", { name: "Restore backup" })).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("not-found page has no serious or critical accessibility violations", async ({ page }) => {
   await page.goto("/does-not-exist");
   await expectNoSeriousAccessibilityViolations(page);

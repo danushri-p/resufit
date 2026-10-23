@@ -967,6 +967,12 @@ export default function AnalyzePage() {
           >
             Tracker
           </Link>
+          <Link
+            href="/data"
+            className="inline-flex rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            Your data
+          </Link>
         </header>
 
         <nav aria-label="Analysis steps" className="flex flex-wrap items-center gap-2 text-sm">

@@ -1,11 +1,11 @@
 // ResuFit service worker: offline support for pages whose data lives in the browser.
 // AI requests (/api/*) are never cached or intercepted.
-const CACHE_VERSION = "resufit-v1";
+const CACHE_VERSION = "resufit-v2";
 const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 const OFFLINE_URL = "/offline";
 // Pages that are useful offline because their data is stored in this browser.
-const PRECACHE_PAGES = ["/", "/tracker", "/history", OFFLINE_URL];
+const PRECACHE_PAGES = ["/", "/tracker", "/history", "/data", OFFLINE_URL];
 const PRECACHE_ASSETS = [
   "/logo.svg",
   "/icons/icon-192.png",
