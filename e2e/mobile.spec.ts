@@ -19,6 +19,9 @@ test("landing, results, history, tracker, and data pages fit a 375px viewport wi
 
   await completeSampleAnalysis(page);
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await page.getByRole("button", { name: "Build tailored resume" }).click();
+  await expect(page.getByRole("article", { name: "Resume preview" })).toBeVisible();
+  await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
 
   await page.goto("/history");
   await expect(page.getByText("2 saved analyses")).toBeVisible();

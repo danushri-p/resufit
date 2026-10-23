@@ -6,6 +6,8 @@ import { Logo } from "@/components/Logo";
 import { UploadBox, type ResumeUploadResult } from "@/components/UploadBox";
 import { AnalysisCards } from "@/components/results/AnalysisCards";
 import { TrackApplicationButton } from "@/components/TrackApplicationButton";
+import { useRouter } from "next/navigation";
+import { startResumeBuilder } from "@/lib/resumeBuilder";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -197,6 +199,7 @@ function MatchSkillChips({
 }
 
 export default function AnalyzePage() {
+  const router = useRouter();
   const [resume, setResume] = useState<ResumeUploadResult>();
   const [jobText, setJobText] = useState("");
   const [result, setResult] = useState<ExtractionResult>();
@@ -891,6 +894,18 @@ export default function AnalyzePage() {
     }
   }
 
+  function openResumeBuilder() {
+    if (!result || !match) return;
+    const started = startResumeBuilder({
+      resume: result.resume,
+      rewrites: rewrites ?? [],
+      matchedSkills: [...match.matchedMustHave, ...match.matchedNiceToHave],
+      jobTitle: result.job.jobTitle,
+      company: result.job.company,
+    });
+    if (started) router.push("/resume");
+  }
+
   function downloadReport() {
     if (!result || !match) return;
 
@@ -1135,12 +1150,17 @@ export default function AnalyzePage() {
               onDownload={downloadReport}
               onCopy={(id, content) => void copyBullet(id, content)}
               extraActions={
-                <TrackApplicationButton
-                  role={result.job.jobTitle}
-                  company={result.job.company}
-                  matchScore={match.score}
-                  historyId={savedHistoryId ?? null}
-                />
+                <>
+                  <Button type="button" variant="outline" onClick={openResumeBuilder}>
+                    Build tailored resume
+                  </Button>
+                  <TrackApplicationButton
+                    role={result.job.jobTitle}
+                    company={result.job.company}
+                    matchScore={match.score}
+                    historyId={savedHistoryId ?? null}
+                  />
+                </>
               }
             />
             <Card>

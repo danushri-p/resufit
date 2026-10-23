@@ -22,7 +22,7 @@ export function OfflineNotice() {
   return (
     <div
       role="status"
-      className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-950"
+      className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-950 print:hidden"
     >
       You&apos;re offline. Your tracker, history and data page still work; analysis, cover letters
       and interview prep need a connection.
