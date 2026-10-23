@@ -3,6 +3,7 @@
 import { TrackApplicationButton } from "@/components/TrackApplicationButton";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -181,7 +182,7 @@ export function ComparisonResults({
           {result.skillGaps.length > 0 && trackHistoryId && (
             <Link
               href={`/learn?from=${encodeURIComponent(trackHistoryId)}`}
-              className={`${buttonVariants({ variant: "outline" })} mt-4`}
+              className={cn(buttonVariants({ variant: "outline" }), "mt-4")}
             >
               Make a learning plan
             </Link>

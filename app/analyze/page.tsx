@@ -9,6 +9,7 @@ import { TrackApplicationButton } from "@/components/TrackApplicationButton";
 import { useRouter } from "next/navigation";
 import { startResumeBuilder } from "@/lib/resumeBuilder";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -1158,7 +1159,7 @@ export default function AnalyzePage() {
                     match.missingMustHave.length + match.missingNiceToHave.length > 0 && (
                       <Link
                         href={`/learn?from=${encodeURIComponent(savedHistoryId)}`}
-                        className={buttonVariants({ variant: "outline" })}
+                        className={cn(buttonVariants({ variant: "outline" }))}
                       >
                         Make a learning plan
                       </Link>

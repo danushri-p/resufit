@@ -34,67 +34,6 @@ describe("buildMarkdownReport", () => {
       match,
     });
 
-    describe("buildComparisonMarkdown", () => {
-      it("includes ranked results and aggregated skill gaps", () => {
-        const report = buildComparisonMarkdown("resume.pdf", {
-          resume: makeResume(),
-          jobs: [
-            {
-              index: 0,
-              job: makeJob({
-                jobTitle: "Frontend Engineer",
-                company: "BrightPath",
-                mustHaveSkills: ["React", "TypeScript"],
-              }),
-              match: {
-                score: 55,
-                label: "Partial match",
-                matchedMustHave: ["React"],
-                missingMustHave: ["TypeScript"],
-                matchedNiceToHave: [],
-                missingNiceToHave: [],
-                suggestions: [],
-                ats: { score: 60, checks: [] },
-              },
-              atsKeywordCoverage: 50,
-            },
-            {
-              index: 1,
-              job: makeJob({
-                jobTitle: "Backend Engineer",
-                company: "Harborlight",
-                mustHaveSkills: ["Node.js"],
-              }),
-              match: {
-                score: 80,
-                label: "Strong match",
-                matchedMustHave: ["Node.js"],
-                missingMustHave: [],
-                matchedNiceToHave: [],
-                missingNiceToHave: [],
-                suggestions: [],
-                ats: { score: 80, checks: [] },
-              },
-              atsKeywordCoverage: 100,
-            },
-          ],
-          skillGaps: [
-            {
-              skill: "TypeScript",
-              missingIn: 1,
-              jobTitles: ["Frontend Engineer"],
-            },
-          ],
-        });
-
-        expect(report.indexOf("Backend Engineer")).toBeLessThan(
-          report.indexOf("Frontend Engineer"),
-        );
-        expect(report).toContain("| Rank | Job | Company | Match | Must-have coverage | ATS keyword coverage |");
-        expect(report).toContain("TypeScript — missing in 1 of 2 jobs");
-      });
-    });
-
     expect(report).toContain("82/100");
     expect(report).toContain("Strong match");
     expect(report).toContain("Highlight React");
@@ -155,5 +94,66 @@ describe("buildMarkdownReport", () => {
     expect(report).toContain("## Interview prep");
     expect(report).toContain("How did you use React?");
     expect(report).toContain("**Based on:** Planner");
+  });
+});
+
+describe("buildComparisonMarkdown", () => {
+  it("includes ranked results and aggregated skill gaps", () => {
+    const report = buildComparisonMarkdown("resume.pdf", {
+      resume: makeResume(),
+      jobs: [
+        {
+          index: 0,
+          job: makeJob({
+            jobTitle: "Frontend Engineer",
+            company: "BrightPath",
+            mustHaveSkills: ["React", "TypeScript"],
+          }),
+          match: {
+            score: 55,
+            label: "Partial match",
+            matchedMustHave: ["React"],
+            missingMustHave: ["TypeScript"],
+            matchedNiceToHave: [],
+            missingNiceToHave: [],
+            suggestions: [],
+            ats: { score: 60, checks: [] },
+          },
+          atsKeywordCoverage: 50,
+        },
+        {
+          index: 1,
+          job: makeJob({
+            jobTitle: "Backend Engineer",
+            company: "Harborlight",
+            mustHaveSkills: ["Node.js"],
+          }),
+          match: {
+            score: 80,
+            label: "Strong match",
+            matchedMustHave: ["Node.js"],
+            missingMustHave: [],
+            matchedNiceToHave: [],
+            missingNiceToHave: [],
+            suggestions: [],
+            ats: { score: 80, checks: [] },
+          },
+          atsKeywordCoverage: 100,
+        },
+      ],
+      skillGaps: [
+        {
+          skill: "TypeScript",
+          missingIn: 1,
+          jobTitles: ["Frontend Engineer"],
+        },
+      ],
+    });
+
+    expect(report.indexOf("Backend Engineer")).toBeLessThan(
+      report.indexOf("Frontend Engineer"),
+    );
+    expect(report).toContain("| Rank | Job | Company | Match | Must-have coverage | ATS keyword coverage |");
+    expect(report).toContain("TypeScript — missing in 1 of 2 jobs");
   });
 });
