@@ -28,6 +28,7 @@ ResuFit compares a resume with a job description and gives an honest match score
 - Download a Markdown report.
 - Keep up to ten recent analyses in browser-local history.
 - Track job applications (status, applied and follow-up dates, notes, job link) with a response rate and follow-ups due, export them as CSV, and link each one back to its analysis. Stored only in this browser; uses no AI requests.
+- Install ResuFit as an app on desktop or phone (Install app button in supported browsers, or Add to Home Screen on iOS). The tracker and history keep working offline; AI features need a connection and AI requests are never cached.
 
 ## Privacy
 
@@ -117,6 +118,7 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - Small local models may be less accurate than hosted models.
 - Scanned/image-only PDFs are not supported; the PDF must contain selectable text.
 - Analysis history and tracked applications are stored per browser and are not shared across browsers or devices. Clearing site data deletes them; use Export CSV to keep a copy of your applications.
+- Offline support caches only the home page, tracker, history, and pages you have opened. Regenerate the install icons with `node scripts/generate-pwa-icons.mjs` after changing `public/logo.svg`, and bump `CACHE_VERSION` in `public/sw.js` when the caching rules change.
 
 ## Project timeline
 
@@ -132,3 +134,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 10:** Add honest interview preparation with guarded, resume-based answer outlines.
 - **Day 11:** Compare one resume against up to three jobs and identify shared skill gaps.
 - **Day 12:** Track job applications with statuses, follow-up reminders, CSV export, and links back to saved analyses.
+- **Day 13:** Make ResuFit an installable app (web app manifest, app icons, service worker) with offline support for the tracker and history.

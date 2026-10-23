@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import { getProviderLabel, ProviderFooter } from "@/components/ProviderFooter";
 import type { Metadata } from "next";
 
@@ -36,6 +37,7 @@ export default function Home() {
           >
             Tracker
           </Link>
+          <InstallAppButton className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700" />
         </header>
 
         <section className="grid gap-6">
