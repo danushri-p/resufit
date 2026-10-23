@@ -372,6 +372,9 @@ export default function TrackerPage() {
             <Link href="/history" className={NAV_LINK}>
               History
             </Link>
+            <Link href="/learn" className={NAV_LINK}>
+              Learning plan
+            </Link>
             <Link href="/data" className={NAV_LINK}>
               Your data
             </Link>

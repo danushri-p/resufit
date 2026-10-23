@@ -88,6 +88,12 @@ export default function HistoryPage() {
             Tracker
           </Link>
           <Link
+            href="/learn"
+            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          >
+            Learning plan
+          </Link>
+          <Link
             href="/data"
             className="rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
           >

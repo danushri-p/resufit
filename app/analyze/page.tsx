@@ -8,7 +8,7 @@ import { AnalysisCards } from "@/components/results/AnalysisCards";
 import { TrackApplicationButton } from "@/components/TrackApplicationButton";
 import { useRouter } from "next/navigation";
 import { startResumeBuilder } from "@/lib/resumeBuilder";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -1154,6 +1154,15 @@ export default function AnalyzePage() {
                   <Button type="button" variant="outline" onClick={openResumeBuilder}>
                     Build tailored resume
                   </Button>
+                  {savedHistoryId &&
+                    match.missingMustHave.length + match.missingNiceToHave.length > 0 && (
+                      <Link
+                        href={`/learn?from=${encodeURIComponent(savedHistoryId)}`}
+                        className={buttonVariants({ variant: "outline" })}
+                      >
+                        Make a learning plan
+                      </Link>
+                    )}
                   <TrackApplicationButton
                     role={result.job.jobTitle}
                     company={result.job.company}

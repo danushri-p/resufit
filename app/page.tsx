@@ -15,35 +15,43 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-900 sm:px-6 sm:py-12">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-16">
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <Link href="/" aria-label="ResuFit" className="min-w-0">
             <Logo />
           </Link>
-          <Link
-            href="/history"
-            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-          >
-            History
-          </Link>
-          <Link
-            href="/compare"
-            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-          >
-            Compare jobs
-          </Link>
-          <Link
-            href="/tracker"
-            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-          >
-            Tracker
-          </Link>
-          <Link
-            href="/data"
-            className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-          >
-            Your data
-          </Link>
-          <InstallAppButton className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700" />
+          <nav aria-label="Main navigation" className="flex flex-wrap gap-1">
+            <Link
+              href="/history"
+              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              History
+            </Link>
+            <Link
+              href="/compare"
+              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              Compare jobs
+            </Link>
+            <Link
+              href="/tracker"
+              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              Tracker
+            </Link>
+            <Link
+              href="/learn"
+              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              Learning plan
+            </Link>
+            <Link
+              href="/data"
+              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+            >
+              Your data
+            </Link>
+            <InstallAppButton className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700" />
+          </nav>
         </header>
 
         <section className="grid gap-6">

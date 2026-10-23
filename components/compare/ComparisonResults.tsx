@@ -1,7 +1,8 @@
 "use client";
 
 import { TrackApplicationButton } from "@/components/TrackApplicationButton";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -176,6 +177,14 @@ export function ComparisonResults({
             <p className="text-sm text-stone-700">
               No must-have skill gaps across these jobs.
             </p>
+          )}
+          {result.skillGaps.length > 0 && trackHistoryId && (
+            <Link
+              href={`/learn?from=${encodeURIComponent(trackHistoryId)}`}
+              className={`${buttonVariants({ variant: "outline" })} mt-4`}
+            >
+              Make a learning plan
+            </Link>
           )}
         </CardContent>
       </Card>

@@ -16,6 +16,9 @@ test("landing, results, history, tracker, and data pages fit a 375px viewport wi
   await page.getByRole("button", { name: "Compare", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Comparison results" })).toBeVisible();
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  await page.getByRole("link", { name: "Make a learning plan" }).click();
+  await expect(page.getByRole("list", { name: "Skills to learn" })).toBeVisible();
+  await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
 
   await completeSampleAnalysis(page);
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);

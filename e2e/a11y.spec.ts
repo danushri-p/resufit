@@ -121,6 +121,16 @@ test("tailored resume builder has no serious or critical accessibility violation
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("learning plan has no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/compare");
+  await page.getByRole("button", { name: "Try a sample" }).click();
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  await page.getByRole("link", { name: "Make a learning plan" }).click();
+  await page.getByRole("group", { name: "Progress for TypeScript" }).getByRole("button", { name: "Done" }).click();
+  await expect(page.getByText(/you can honestly add TypeScript/)).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("not-found page has no serious or critical accessibility violations", async ({ page }) => {
   await page.goto("/does-not-exist");
   await expectNoSeriousAccessibilityViolations(page);
