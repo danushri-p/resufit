@@ -13,6 +13,13 @@ import {
   listApplications,
   type Application,
 } from "@/lib/tracker";
+import {
+  LearningProgressSchema,
+  clearLearningProgress,
+  importLearningProgress,
+  readLearningProgress,
+  type LearningProgress,
+} from "@/lib/learning";
 
 export const BACKUP_VERSION = 1;
 export const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
@@ -28,6 +35,8 @@ const BackupFileSchema = z.object({
   exportedAt: z.string(),
   history: z.array(z.unknown()),
   applications: z.array(z.unknown()),
+  // Added after the first backup format; optional so older backups still restore.
+  learning: z.unknown().optional(),
 });
 
 export interface Backup {
@@ -36,6 +45,7 @@ export interface Backup {
   exportedAt: string;
   history: HistoryEntry[];
   applications: Application[];
+  learning: LearningProgress;
 }
 
 export type ParsedBackup =
@@ -50,6 +60,7 @@ export type ParsedBackup =
 export interface RestoreSummary {
   history: { imported: number; skipped: number };
   applications: { imported: number; skipped: number };
+  learning: { imported: number };
 }
 
 export function createBackup(now: Date = new Date()): Backup {
@@ -59,6 +70,7 @@ export function createBackup(now: Date = new Date()): Backup {
     exportedAt: now.toISOString(),
     history: listHistoryEntries(),
     applications: listApplications(),
+    learning: readLearningProgress(),
   };
 }
 
@@ -105,6 +117,7 @@ export function parseBackup(text: string): ParsedBackup {
     .map((entry) => ApplicationSchema.safeParse(entry))
     .filter((entry) => entry.success)
     .map((entry) => entry.data);
+  const learning = LearningProgressSchema.safeParse(file.data.learning ?? {});
 
   return {
     success: true,
@@ -114,6 +127,7 @@ export function parseBackup(text: string): ParsedBackup {
       exportedAt: file.data.exportedAt,
       history,
       applications,
+      learning: learning.success ? learning.data : {},
     },
     invalidCount:
       file.data.history.length -
@@ -129,13 +143,15 @@ export function restoreBackup(
 ): RestoreSummary | undefined {
   const history = importHistoryEntries(backup.history, mode);
   const applications = importApplications(backup.applications, mode);
-  if (!history || !applications) return undefined;
-  return { history, applications };
+  const learning = importLearningProgress(backup.learning, mode);
+  if (!history || !applications || !learning) return undefined;
+  return { history, applications, learning };
 }
 
 export function deleteAllData(): void {
   clearHistory();
   clearApplications();
+  clearLearningProgress();
   try {
     for (const key of SESSION_KEYS) sessionStorage.removeItem(key);
   } catch {

@@ -180,8 +180,8 @@ export default function DataPage() {
             Back up
           </h2>
           <p className="text-sm text-stone-700">
-            Downloads a file with your analyses, cover letters, interview prep, and tracked
-            applications. Keep it private: it can include details from your resume.
+            Downloads a file with your analyses, cover letters, interview prep, tracked
+            applications, and learning progress. Keep it private: it can include details from your resume.
           </p>
           <Button type="button" onClick={downloadBackup} disabled={!hasData}>
             Download backup
@@ -274,7 +274,7 @@ export default function DataPage() {
           </h2>
           <p className="text-sm text-stone-700">
             Permanently deletes every saved analysis, comparison, cover letter, interview prep,
-            and tracked application from this browser. This can&apos;t be undone.
+            tracked application, and learning progress from this browser. This can&apos;t be undone.
           </p>
           {confirmDelete ? (
             <div className="flex flex-wrap items-center gap-2">

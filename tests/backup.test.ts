@@ -8,6 +8,7 @@ import {
 } from "@/lib/backup";
 import { listHistoryEntries, saveHistoryEntry, type HistoryEntryInput } from "@/lib/history";
 import { listApplications, saveApplication, type ApplicationInput } from "@/lib/tracker";
+import { readLearningProgress, setSkillStatus } from "@/lib/learning";
 import { emptyAts, makeJob, makeResume } from "@/tests/fixtures";
 
 function storageMock() {
@@ -88,6 +89,7 @@ describe("backup", () => {
     expect(summary).toEqual({
       history: { imported: 1, skipped: 0 },
       applications: { imported: 1, skipped: 0 },
+      learning: { imported: 0 },
     });
     expect(listHistoryEntries()[0].jobTitle).toBe("Job 1");
     expect(listApplications()[0].role).toBe("Frontend Developer");
@@ -167,10 +169,35 @@ describe("backup", () => {
     });
   });
 
+  it("backs up and restores learning progress", () => {
+    setSkillStatus("typescript", "done");
+    const text = JSON.stringify(createBackup());
+    deleteAllData();
+    expect(readLearningProgress()).toEqual({});
+
+    const parsed = parseBackup(text);
+    if (!parsed.success) throw new Error(parsed.error);
+    expect(restoreBackup(parsed.backup, "merge")?.learning).toEqual({ imported: 1 });
+    expect(readLearningProgress().typescript.status).toBe("done");
+  });
+
+  it("restores backups made before learning progress existed", () => {
+    saveApplication(applicationInput("Frontend Developer"));
+    const { learning: _learning, ...older } = createBackup();
+    void _learning;
+    deleteAllData();
+    const parsed = parseBackup(JSON.stringify(older));
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.backup.learning).toEqual({});
+    expect(restoreBackup(parsed.backup, "merge")?.applications.imported).toBe(1);
+  });
+
   it("deletes all data including the compare prefill", () => {
     saveHistoryEntry(historyInput(1));
     saveApplication(applicationInput("Frontend Developer"));
     session.setItem("resufit:compare-prefill", "{}");
+    setSkillStatus("docker", "learning");
     deleteAllData();
     expect(local.store.size).toBe(0);
     expect(session.store.size).toBe(0);
