@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { test, expect } from "@playwright/test";
-import { completeSampleAnalysis, mockAI } from "./helpers";
+import { completeSampleAnalysis, mockAI, openTab } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await mockAI(page);
@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
 test("writes an editable cover letter and supports copy and download", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await completeSampleAnalysis(page);
+  await openTab(page, "Cover letter");
   await page.getByRole("button", { name: "Write cover letter" }).click();
 
   const editor = page.getByLabel("Editable cover letter");
@@ -43,6 +44,7 @@ test("shows neutral accuracy warnings from the cover-letter response", async ({ 
     },
   });
   await completeSampleAnalysis(page);
+  await openTab(page, "Cover letter");
   await page.getByRole("button", { name: "Write cover letter" }).click();
 
   await expect(page.getByRole("status").filter({ hasText: "Accuracy notes" })).toContainText(

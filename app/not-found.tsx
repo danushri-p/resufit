@@ -1,14 +1,8 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-stone-50 px-4 text-center">
-      <header className="absolute left-4 top-6">
-        <Link href="/" aria-label="ResuFit" className="inline-flex">
-          <Logo />
-        </Link>
-      </header>
+    <main className="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-20 text-center">
       <p className="text-sm font-semibold uppercase tracking-wider text-indigo-800">
         404 · Not found
       </p>

@@ -59,9 +59,9 @@ test("updates status, filters, edits, flags follow-ups and deletes", async ({ pa
   });
 
   await expect(page.getByText("1 follow-up due")).toBeVisible();
-  const overdueCard = page.getByRole("listitem").filter({ hasText: "Backend Developer Intern" });
+  const overdueCard = page.getByRole("main").getByRole("listitem").filter({ hasText: "Backend Developer Intern" });
   await expect(overdueCard.getByText("Follow up due")).toBeVisible();
-  await expect(page.getByRole("listitem").first()).toContainText("Backend Developer Intern");
+  await expect(page.getByRole("main").getByRole("listitem").first()).toContainText("Backend Developer Intern");
   await expect(stat(page, "Response rate")).toContainText("0%");
 
   await page
@@ -71,11 +71,11 @@ test("updates status, filters, edits, flags follow-ups and deletes", async ({ pa
   await expect(stat(page, "Response rate")).toContainText("100%");
 
   await page.getByRole("button", { name: "Saved (1)" }).click();
-  await expect(page.getByRole("listitem")).toHaveCount(1);
-  await expect(page.getByRole("listitem")).toContainText("Frontend Developer");
+  await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(1);
+  await expect(page.getByRole("main").getByRole("listitem")).toContainText("Frontend Developer");
   await page.getByRole("button", { name: "All (2)" }).click();
 
-  const frontendCard = page.getByRole("listitem").filter({ hasText: "Frontend Developer" });
+  const frontendCard = page.getByRole("main").getByRole("listitem").filter({ hasText: "Frontend Developer" });
   await frontendCard.getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("Notes (optional)").fill("Portfolio review on Friday");
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -84,7 +84,7 @@ test("updates status, filters, edits, flags follow-ups and deletes", async ({ pa
   await frontendCard.getByRole("button", { name: "Delete" }).click();
   await expect(frontendCard.getByText("Delete this application?")).toBeVisible();
   await frontendCard.getByRole("button", { name: "Confirm delete" }).click();
-  await expect(page.getByRole("listitem")).toHaveCount(1);
+  await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(1);
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Backend Developer Intern · Harborlight Systems" })).toBeVisible();
@@ -110,7 +110,7 @@ test("tracks an analysis and opens it again from the tracker", async ({ page }) 
   // mounted in the background must refresh when it is shown again.
   await page.goto("/tracker");
   await expect(page.getByRole("heading", { name: "Track your first application" })).toBeVisible();
-  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Analyze a resume" }).click();
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Analyze", exact: true }).click();
   await expect(page).toHaveURL("/analyze");
   await page.getByRole("button", { name: "Try a sample" }).click();
   await page.getByRole("button", { name: "Analyze", exact: true }).click();
@@ -120,7 +120,7 @@ test("tracks an analysis and opens it again from the tracker", async ({ page }) 
 
   await page.getByRole("link", { name: "View tracker" }).click();
   await expect(page).toHaveURL("/tracker");
-  const card = page.getByRole("listitem");
+  const card = page.getByRole("main").getByRole("listitem");
   await expect(card).toHaveCount(1);
   await expect(card).toContainText("Full-Stack Developer Intern · Fictional Northstar Learning Lab");
   await expect(card).toContainText("Match 82/100");
@@ -129,6 +129,7 @@ test("tracks an analysis and opens it again from the tracker", async ({ page }) 
   await expect(page).toHaveURL(/\/history\?open=/);
   await expect(page.getByRole("heading", { name: "Full-Stack Developer Intern" })).toBeVisible();
   // Next.js keeps recently visited pages mounted but hidden, so check only visible text.
+  await page.getByRole("tab", { name: "ATS check" }).click();
   await expect(page.locator("p:visible", { hasText: "ATS score: 88/100" })).toHaveCount(1);
 });
 
@@ -145,5 +146,5 @@ test("tracks comparison jobs separately without duplicates", async ({ page }) =>
   await expect(trackButtons).toHaveCount(1);
 
   await page.goto("/tracker");
-  await expect(page.getByRole("listitem")).toHaveCount(1);
+  await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(1);
 });

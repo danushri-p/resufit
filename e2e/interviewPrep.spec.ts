@@ -1,13 +1,13 @@
 import fs from "node:fs/promises";
 import { test, expect } from "@playwright/test";
-import { completeSampleAnalysis, mockAI } from "./helpers";
+import { completeSampleAnalysis, mockAI, openTab } from "./helpers";
 
 test("generates, practises, downloads, and saves interview prep", async ({ page }) => {
   await mockAI(page);
   await completeSampleAnalysis(page);
 
+  await openTab(page, "Interview prep");
   await page.getByRole("button", { name: "Prepare for interview" }).click();
-  await expect(page.getByText("Interview prep", { exact: true })).toBeVisible();
   await expect(page.getByText("Question 2 was adjusted to stay grounded in your resume."))
     .toBeVisible();
 
@@ -37,7 +37,7 @@ test("generates, practises, downloads, and saves interview prep", async ({ page 
 
   await page.goto("/history");
   await page.getByRole("button", { name: "Open" }).first().click();
-  await expect(page.getByText("Interview prep", { exact: true })).toBeVisible();
+  await openTab(page, "Interview prep");
   await expect(
     page.getByText("How did you build the event discovery experience?"),
   ).toBeVisible();

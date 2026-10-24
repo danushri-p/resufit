@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ComparisonResults } from "@/components/compare/ComparisonResults";
-import { Logo } from "@/components/Logo";
+import { PAGE_CLASS, PageHeader } from "@/components/PageHeader";
 import { UploadBox, type ResumeUploadResult } from "@/components/UploadBox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -237,221 +236,184 @@ export default function ComparePage() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-900 sm:px-6 sm:py-12">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <Link href="/" aria-label="ResuFit" className="mb-2 inline-flex">
-              <Logo />
-            </Link>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Compare jobs
-            </h1>
-            <p className="mt-2 text-stone-700">
-              See how one resume aligns with two or three opportunities.
-            </p>
-          </div>
-          <nav aria-label="Main navigation" className="flex flex-wrap gap-2">
-            <Link
-              href="/analyze"
-              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-            >
-              Analyze
-            </Link>
-            <Link
-              href="/history"
-              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-            >
-              History
-            </Link>
-            <Link
-              href="/tracker"
-              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-            >
-              Tracker
-            </Link>
-            <Link
-              href="/data"
-              className="rounded-md px-3 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-            >
-              Your data
-            </Link>
-          </nav>
-        </header>
+    <main className={PAGE_CLASS}>
+      <PageHeader
+        title="Compare jobs"
+        description="See how one resume aligns with two or three opportunities."
+      />
 
-        <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isComparing}
+          onClick={loadSample}
+        >
+          Try a sample
+        </Button>
+      </div>
+
+      <UploadBox
+        key={uploadKey}
+        disabled={isComparing}
+        onTextExtracted={(uploaded) => {
+          setResume(uploaded);
+          setResult(undefined);
+          setError(undefined);
+        }}
+      />
+      {resume && (
+        <p className="text-sm text-stone-700" role="status">
+          Resume ready: {resume.fileName} · {resume.wordCount} words
+        </p>
+      )}
+
+      <section aria-label="Job descriptions" className="grid min-w-0 gap-4">
+        {jobs.map((job, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CardTitle>Job {index + 1}</CardTitle>
+                {jobs.length > 2 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isComparing}
+                    onClick={() => {
+                      setJobs((current) =>
+                        current.filter((_, itemIndex) => itemIndex !== index),
+                      );
+                      setResult(undefined);
+                      setError(undefined);
+                    }}
+                  >
+                    Remove job {index + 1}
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <label className="grid gap-1 text-sm font-medium text-stone-800">
+                Optional label for job {index + 1}
+                <input
+                  value={job.label}
+                  disabled={isComparing}
+                  maxLength={100}
+                  onChange={(event) =>
+                    updateJob(index, { label: event.target.value })
+                  }
+                  className="h-10 rounded-md border border-stone-300 bg-white px-3"
+                />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-stone-800">
+                Job description {index + 1}
+                <Textarea
+                  value={job.text}
+                  disabled={isComparing}
+                  rows={7}
+                  maxLength={MAX_JOB_TEXT_LENGTH}
+                  onChange={(event) =>
+                    updateJob(index, { text: event.target.value })
+                  }
+                  aria-describedby={`job-count-${index}`}
+                />
+              </label>
+              <p
+                id={`job-count-${index}`}
+                className="text-sm text-stone-700"
+                aria-live="polite"
+              >
+                {job.text.length}/{MAX_JOB_TEXT_LENGTH} characters; at least{" "}
+                {MIN_JOB_TEXT_LENGTH} required
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+        {jobs.length < 3 && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-fit"
+            disabled={isComparing}
+            onClick={() => {
+              setJobs((current) => [
+                ...current,
+                { label: `Job ${current.length + 1}`, text: "" },
+              ]);
+              setResult(undefined);
+              setError(undefined);
+            }}
+          >
+            Add another job
+          </Button>
+        )}
+      </section>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          disabled={!canCompare || retryCountdown > 0}
+          onClick={() => void compare()}
+        >
+          {isComparing ? "Comparing…" : "Compare"}
+        </Button>
+        {result && (
           <Button
             type="button"
             variant="outline"
             disabled={isComparing}
-            onClick={loadSample}
+            onClick={downloadComparison}
           >
-            Try a sample
+            Download comparison
           </Button>
-        </div>
-
-        <UploadBox
-          key={uploadKey}
-          disabled={isComparing}
-          onTextExtracted={(uploaded) => {
-            setResume(uploaded);
-            setResult(undefined);
-            setError(undefined);
-          }}
-        />
-        {resume && (
-          <p className="text-sm text-stone-700" role="status">
-            Resume ready: {resume.fileName} · {resume.wordCount} words
-          </p>
-        )}
-
-        <section aria-label="Job descriptions" className="grid min-w-0 gap-4">
-          {jobs.map((job, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <CardTitle>Job {index + 1}</CardTitle>
-                  {jobs.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isComparing}
-                      onClick={() => {
-                        setJobs((current) =>
-                          current.filter((_, itemIndex) => itemIndex !== index),
-                        );
-                        setResult(undefined);
-                        setError(undefined);
-                      }}
-                    >
-                      Remove job {index + 1}
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <label className="grid gap-1 text-sm font-medium text-stone-800">
-                  Optional label for job {index + 1}
-                  <input
-                    value={job.label}
-                    disabled={isComparing}
-                    maxLength={100}
-                    onChange={(event) =>
-                      updateJob(index, { label: event.target.value })
-                    }
-                    className="h-10 rounded-md border border-stone-300 bg-white px-3"
-                  />
-                </label>
-                <label className="grid gap-1 text-sm font-medium text-stone-800">
-                  Job description {index + 1}
-                  <Textarea
-                    value={job.text}
-                    disabled={isComparing}
-                    rows={7}
-                    maxLength={MAX_JOB_TEXT_LENGTH}
-                    onChange={(event) =>
-                      updateJob(index, { text: event.target.value })
-                    }
-                    aria-describedby={`job-count-${index}`}
-                  />
-                </label>
-                <p
-                  id={`job-count-${index}`}
-                  className="text-sm text-stone-700"
-                  aria-live="polite"
-                >
-                  {job.text.length}/{MAX_JOB_TEXT_LENGTH} characters; at least{" "}
-                  {MIN_JOB_TEXT_LENGTH} required
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-          {jobs.length < 3 && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-fit"
-              disabled={isComparing}
-              onClick={() => {
-                setJobs((current) => [
-                  ...current,
-                  { label: `Job ${current.length + 1}`, text: "" },
-                ]);
-                setResult(undefined);
-                setError(undefined);
-              }}
-            >
-              Add another job
-            </Button>
-          )}
-        </section>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            disabled={!canCompare || retryCountdown > 0}
-            onClick={() => void compare()}
-          >
-            {isComparing ? "Comparing…" : "Compare"}
-          </Button>
-          {result && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isComparing}
-              onClick={downloadComparison}
-            >
-              Download comparison
-            </Button>
-          )}
-        </div>
-
-        {isComparing && (
-          <p className="text-sm font-medium text-indigo-800" role="status">
-            Reading job {progressIndex + 1} of {jobs.length}…
-          </p>
-        )}
-        {error && (
-          <div className="space-y-2">
-            <p className="text-sm text-red-800" role="alert">{error}</p>
-            {retryAfterSeconds !== null && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isComparing || retryCountdown > 0}
-                  onClick={() => void compare()}
-                >
-                  Try again
-                </Button>
-                {retryCountdown > 0 && (
-                  <p className="text-sm text-stone-700" role="status">
-                    Try again in {retryCountdown} seconds.
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {result && (
-          <section aria-labelledby="comparison-results-heading" className="grid gap-4">
-            <h2
-              id="comparison-results-heading"
-              tabIndex={-1}
-              className="text-2xl font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
-            >
-              Comparison results
-            </h2>
-            <ComparisonResults
-              result={result}
-              labels={jobs.map((job) => job.label)}
-              onOpenFullAnalysis={openFullAnalysis}
-              trackHistoryId={comparisonHistoryId}
-            />
-          </section>
         )}
       </div>
+
+      {isComparing && (
+        <p className="text-sm font-medium text-indigo-800" role="status">
+          Reading job {progressIndex + 1} of {jobs.length}…
+        </p>
+      )}
+      {error && (
+        <div className="space-y-2">
+          <p className="text-sm text-red-800" role="alert">{error}</p>
+          {retryAfterSeconds !== null && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isComparing || retryCountdown > 0}
+                onClick={() => void compare()}
+              >
+                Try again
+              </Button>
+              {retryCountdown > 0 && (
+                <p className="text-sm text-stone-700" role="status">
+                  Try again in {retryCountdown} seconds.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {result && (
+        <section aria-labelledby="comparison-results-heading" className="grid gap-4">
+          <h2
+            id="comparison-results-heading"
+            tabIndex={-1}
+            className="text-2xl font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700"
+          >
+            Comparison results
+          </h2>
+          <ComparisonResults
+            result={result}
+            labels={jobs.map((job) => job.label)}
+            onOpenFullAnalysis={openFullAnalysis}
+            trackHistoryId={comparisonHistoryId}
+          />
+        </section>
+      )}
     </main>
   );
 }

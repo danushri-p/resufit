@@ -58,6 +58,7 @@ function input(overrides: Partial<ResumeBuilderInput> = {}): ResumeBuilderInput 
       },
     ],
     matchedSkills: ["React", "Node.js"],
+    rejectedBullets: [],
     jobTitle: "Frontend Developer",
     company: "BrightPath Studio",
     ...overrides,
@@ -74,6 +75,15 @@ describe("resume builder draft", () => {
     expect(endpoints.improved).toBeNull();
     expect(bulletText(endpoints)).toBe("Developed 12 REST endpoints");
     expect(countImprovedBullets(draft)).toEqual({ available: 1, used: 1 });
+  });
+
+  it("starts rejected rewrites on the original wording but keeps them available", () => {
+    const draft = createDraft(input({ rejectedBullets: ["Built event pages"] }));
+    const [built] = draft.projects[0].bullets;
+    expect(built.improved).toBe("Built responsive React event pages");
+    expect(built.useImproved).toBe(false);
+    expect(bulletText(built)).toBe("Built event pages");
+    expect(countImprovedBullets(draft)).toEqual({ available: 1, used: 0 });
   });
 
   it("switches back to the original wording and respects user edits", () => {

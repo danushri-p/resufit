@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { test, expect } from "@playwright/test";
-import { loadSample, mockAI } from "./helpers";
+import { loadSample, mockAI, openTab } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await mockAI(page);
@@ -19,11 +19,16 @@ test("analyzes the sample, rewrites bullets, downloads a report, and starts over
   );
   await expect(page.getByText("React", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Highlight API development")).toBeVisible();
+  await openTab(page, "ATS check");
   await expect(page.getByText("ATS score: 88/100")).toBeVisible();
+  await openTab(page, "Overview");
 
   await page.getByRole("button", { name: "Improve bullets" }).click();
+  // The results switch to the Bullets tab once the rewrites arrive.
+  await expect(page.getByRole("tab", { name: "Bullets" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByText("Improved bullets", { exact: true })).toBeVisible();
   await expect(page.getByText(/Built 12 Node\.js and Express REST endpoints/)).toBeVisible();
+  await openTab(page, "Overview");
 
   const reportDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download report" }).click();
@@ -48,4 +53,20 @@ test("keeps action buttons disabled until the mocked requests finish", async ({ 
   await page.getByRole("button", { name: "Analyze", exact: true }).click();
   await expect(page.getByRole("button", { name: "Analyzing…" })).toBeDisabled();
   await expect(page.getByRole("heading", { name: "Results" })).toBeVisible();
+});
+
+test("rejected rewrites keep the original wording in the tailored resume", async ({ page }) => {
+  await loadSample(page);
+  await page.getByRole("button", { name: "Analyze", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Results" })).toBeVisible();
+  await page.getByRole("button", { name: "Improve bullets" }).click();
+  await expect(page.getByText("Improved bullets", { exact: true })).toBeVisible();
+
+  const choice = page.getByRole("group", { name: "Rewrite 1 for CampusConnect" });
+  await choice.getByRole("button", { name: "Reject" }).click();
+  await expect(choice.getByRole("button", { name: "Reject" })).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("button", { name: "Build tailored resume" }).click();
+  await expect(page).toHaveURL("/resume");
+  await expect(page.getByText("Using 1 of 2 improved bullets.")).toBeVisible();
 });

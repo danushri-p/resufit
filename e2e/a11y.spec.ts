@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "@playwright/test";
-import { completeSampleAnalysis, mockAI } from "./helpers";
+import { completeSampleAnalysis, mockAI, openTab } from "./helpers";
 
 async function expectNoSeriousAccessibilityViolations(page: import("@playwright/test").Page) {
   const results = await new AxeBuilder({ page }).analyze();
@@ -45,6 +45,7 @@ test("analysis results have no serious or critical accessibility violations", as
 
 test("interview preparation has no serious or critical accessibility violations", async ({ page }) => {
   await completeSampleAnalysis(page);
+  await openTab(page, "Interview prep");
   await page.getByRole("button", { name: "Prepare for interview" }).click();
   await expect(page.getByRole("button", { name: "Practice mode off" })).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page);

@@ -1,5 +1,6 @@
 "use client";
 
+import { CloudUpload } from "lucide-react";
 import { useRef, useState } from "react";
 import {
   Card,
@@ -163,10 +164,10 @@ export function UploadBox({
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+          className={`flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
             isDragging
               ? "border-indigo-500 bg-indigo-50"
-              : "border-stone-300 bg-stone-50 hover:border-indigo-400"
+              : "border-indigo-200 bg-stone-50 hover:border-indigo-400"
           }`}
         >
           <input
@@ -183,11 +184,20 @@ export function UploadBox({
             }}
             aria-label="Select resume file"
           />
-          <p className="font-medium text-stone-800">
+          <span className="inline-flex size-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
+            <CloudUpload aria-hidden="true" className="size-6" />
+          </span>
+          <p className="font-semibold text-stone-800">
             {isDragging
               ? "Drop your resume here"
               : "Drag your resume here or click to browse"}
           </p>
+          <span
+            aria-hidden="true"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Choose file
+          </span>
           {fileName && (
             <p className="text-sm text-stone-700" aria-live="polite">
               {isUploading ? "Uploading" : "Selected"}: {fileName}

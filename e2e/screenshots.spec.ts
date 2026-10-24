@@ -14,7 +14,7 @@ const directory = path.join(process.cwd(), "docs", "screenshots");
 async function capture(page: Page, name: string, fullPage = false) {
   // Let fonts and layout settle so screenshots are stable.
   await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({ path: path.join(directory, `${name}.png`), fullPage });
+  await page.screenshot({ path: path.join(directory, `${name}.png`), fullPage, animations: "disabled" });
 }
 
 function isoDate(daysFromToday: number): string {
@@ -48,29 +48,36 @@ test("captures the README screenshots", async ({ page }) => {
     },
   });
   await page.emulateMedia({ colorScheme: "light" });
-  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await fs.mkdir(directory, { recursive: true });
 
   await page.goto("/");
-  await page.getByRole("heading", { name: "Make your next move count." }).waitFor();
+  await page.getByRole("heading", { name: /Your next opportunity/ }).waitFor();
   await capture(page, "landing");
 
   await page.goto("/analyze?sample=1");
   await page.getByText("Sample data: fictional resume and job description.").waitFor();
   await page.getByRole("button", { name: "Analyze", exact: true }).click();
   await page.getByRole("heading", { name: "Results" }).waitFor();
-  await page.getByRole("button", { name: "Improve bullets" }).click();
-  await page.getByRole("button", { name: "Build tailored resume" }).waitFor();
-  await page
-    .getByRole("heading", { name: "Results" })
-    .evaluate((element) => element.scrollIntoView({ block: "start" }));
+  await page.evaluate(() => window.scrollTo(0, 0));
   await capture(page, "results");
 
+  await page.getByRole("tab", { name: "ATS check" }).click();
+  await page.getByText(/^ATS score: /).waitFor();
+  await capture(page, "ats");
+
+  await page.getByRole("tab", { name: "Overview" }).click();
+  await page.getByRole("button", { name: "Improve bullets" }).click();
+  await page.getByText("Improved bullets", { exact: true }).waitFor();
+  await capture(page, "bullets");
+
+  await page.getByRole("tab", { name: "Cover letter" }).click();
   await page.getByRole("button", { name: "Write cover letter" }).click();
-  const letter = page.getByLabel("Editable cover letter");
-  await letter.waitFor();
-  await letter.scrollIntoViewIfNeeded();
+  await page.getByLabel("Editable cover letter").waitFor();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await capture(page, "cover-letter");
+
+  await page.getByRole("tab", { name: "Bullets" }).click();
 
   await page.getByRole("button", { name: "Build tailored resume" }).click();
   await page.getByRole("article", { name: "Resume preview" }).waitFor();
@@ -111,8 +118,12 @@ test("captures the README screenshots", async ({ page }) => {
   await addApplication(page, { role: "Backend Developer Intern", company: "Harborlight Systems", status: "saved" });
   await capture(page, "tracker");
 
+  await page.goto("/history");
+  await page.getByRole("searchbox", { name: "Search history" }).waitFor();
+  await capture(page, "history");
+
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/");
-  await page.getByRole("heading", { name: "Make your next move count." }).waitFor();
+  await page.getByRole("heading", { name: /Your next opportunity/ }).waitFor();
   await capture(page, "dark");
 });

@@ -11,7 +11,7 @@ const LINK =
 
 export default function OfflinePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-stone-50 px-4 text-center">
+    <main className="flex flex-1 flex-col items-center justify-center gap-5 px-4 py-20 text-center">
       <Logo size={48} />
       <h1 className="text-3xl font-semibold tracking-tight text-stone-900">
         You&apos;re offline

@@ -16,6 +16,8 @@ export const ResumeBuilderInputSchema = z.object({
     )
     .default([]),
   matchedSkills: z.array(z.string()).default([]),
+  /** Original bullets whose rewrite the user rejected; they start on the original wording. */
+  rejectedBullets: z.array(z.string()).default([]),
   jobTitle: z.string().nullable(),
   company: z.string().nullable(),
 });
@@ -104,11 +106,12 @@ export function createDraft(input: ResumeBuilderInput): ResumeDraft {
           const rewrite = projectRewrites.find((entry) => sameText(entry.original, bullet));
           const improved =
             rewrite && !sameText(rewrite.rewritten, bullet) ? rewrite.rewritten.trim() : null;
+          const rejected = input.rejectedBullets.some((entry) => sameText(entry, bullet));
           return {
             id: `project-${projectIndex}-bullet-${bulletIndex}`,
             original: bullet.trim(),
             improved,
-            useImproved: improved !== null,
+            useImproved: improved !== null && !rejected,
             edited: null,
           };
         }),
