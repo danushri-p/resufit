@@ -12,19 +12,24 @@ ResuFit compares your resume with a job description and helps you improve your a
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/results.png" alt="Match analysis with score, matched and missing skills, and suggestions"><br><sub>Match analysis and suggestions</sub></td>
-    <td width="50%"><img src="docs/screenshots/compare.png" alt="Comparison of one resume against two jobs, ranked by match"><br><sub>Compare jobs</sub></td>
+    <td width="50%"><img src="docs/screenshots/results.png" alt="Results overview with match score ring, score bars, skills match and missing skills"><br><sub>Results overview</sub></td>
+    <td width="50%"><img src="docs/screenshots/bullets.png" alt="Before and after bullet rewrites with accept and reject buttons"><br><sub>Bullet rewrites (accept or reject)</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/resume.png" alt="Tailored resume builder with improved bullets"><br><sub>Tailored resume builder</sub></td>
+    <td><img src="docs/screenshots/ats.png" alt="Resume quality checks with ATS score ring and a tip"><br><sub>ATS check</sub></td>
     <td><img src="docs/screenshots/cover-letter.png" alt="Editable cover letter grounded in the resume"><br><sub>Cover letter</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/learn.png" alt="Learning plan with official docs and practice projects"><br><sub>Learning plan</sub></td>
-    <td><img src="docs/screenshots/tracker.png" alt="Application tracker with statuses and follow-ups"><br><sub>Application tracker</sub></td>
+    <td><img src="docs/screenshots/compare.png" alt="Comparison of one resume against two jobs, ranked by match"><br><sub>Compare jobs</sub></td>
+    <td><img src="docs/screenshots/history.png" alt="Searchable history table with match scores and dates"><br><sub>History</sub></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/screenshots/dark.png" alt="ResuFit in dark mode"><br><sub>Dark mode</sub></td>
+    <td><img src="docs/screenshots/resume.png" alt="Tailored resume builder with improved bullets"><br><sub>Tailored resume builder</sub></td>
+    <td><img src="docs/screenshots/learn.png" alt="Learning plan with official docs and practice projects"><br><sub>Learning plan</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/tracker.png" alt="Application tracker with statuses and follow-ups"><br><sub>Application tracker</sub></td>
+    <td><img src="docs/screenshots/dark.png" alt="ResuFit home page in dark mode"><br><sub>Dark mode</sub></td>
   </tr>
 </table>
 
@@ -39,7 +44,8 @@ Screenshots use the fictional sample resume and jobs, with AI responses mocked.
 - Compare one resume against up to three jobs, ranked by match, with the skill gaps they share.
 
 ### Improve
-- Suggestions and project-bullet rewrites with honesty checks (see below).
+- Results split into tabs: Overview, Skills, Bullets, ATS check, Resume & job, Cover letter, and Interview prep.
+- Suggestions and project-bullet rewrites with honesty checks (see below); accept or reject each rewrite before building a tailored resume.
 - Tailored, ATS-friendly one-column resume: choose original or improved wording per bullet, reorder projects, put job-matching skills first, edit any text, then save as PDF (browser print) or copy/download text.
 - Editable cover letter that uses only facts from your resume.
 - Interview prep with resume-grounded questions, answer outlines, and a practice mode.
@@ -50,7 +56,8 @@ Screenshots use the fictional sample resume and jobs, with AI responses mocked.
 - Markdown report for an analysis or comparison.
 
 ### Your data and the app
-- History of the ten most recent analyses and comparisons.
+- App layout with a navy sidebar (a menu button on phones); every tool has its own page or results tab.
+- History of the ten most recent analyses and comparisons, searchable by role, company, or file.
 - Your data page (`/data`): back up everything to a JSON file, restore it on another browser or device (merge or replace), or delete everything at once.
 - Installable app (manifest, icons, service worker). Home, tracker, history, data, and learning plan work offline; AI features need a connection, and AI requests are never cached.
 - Light, dark, or system theme, applied before the page paints. Printed resumes always stay light.
@@ -169,3 +176,4 @@ Import the GitHub repository in Vercel, set `AI_PROVIDER=gemini` and `GEMINI_API
 - **Day 16:** Add dark mode with a system/light/dark switch, no flash on load, and dark-mode accessibility checks.
 - **Day 17:** Add a learning plan for skill gaps with curated official docs, practice projects, and progress tracking.
 - **Day 18:** Maintenance: upgrade Vitest to 5 (clearing the critical advisories), keep build-only tools out of production dependencies, fix outline-button borders, and refresh the README and screenshots.
+- **Day 19:** Redesign the interface: sidebar app layout, indigo theme with a navy sidebar, new home page, tabbed results, accept/reject for rewrites, and a searchable history table.

@@ -1,13 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { OfflineNotice } from "@/components/pwa/OfflineNotice";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { AppShell } from "@/components/AppShell";
+import { ProviderFooter } from "@/components/ProviderFooter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
 });
 
@@ -44,19 +46,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${geistMono.variable} h-full antialiased`}
       // The theme script below may add the "dark" class before React hydrates.
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">
-        <OfflineNotice />
-        {children}
-        <footer className="flex justify-center bg-stone-50 px-4 pb-8 print:hidden">
-          <ThemeToggle />
-        </footer>
+      <body className="min-h-full bg-stone-50 text-stone-900">
+        <AppShell>
+          <OfflineNotice />
+          <div className="flex flex-1 flex-col">{children}</div>
+          <footer className="flex flex-wrap items-center justify-center gap-4 px-4 pb-8 print:hidden">
+            <ThemeToggle />
+            <ProviderFooter />
+          </footer>
+        </AppShell>
         <ServiceWorkerRegistration />
       </body>
     </html>

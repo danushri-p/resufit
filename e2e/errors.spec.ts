@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { completeSampleAnalysis, loadSample, mockAI } from "./helpers";
+import { completeSampleAnalysis, loadSample, mockAI, openTab } from "./helpers";
 import analyzeFixture from "./fixtures/analyze.json";
 
 test("shows retry countdown after a temporary extraction limit", async ({ page }) => {
@@ -61,13 +61,14 @@ test("daily suggestions limit still displays the score and ATS results", async (
   await completeSampleAnalysis(page);
 
   await expect(page.getByRole("progressbar", { name: "Resume match score" })).toBeVisible();
-  await expect(page.getByText("ATS score: 88/100")).toBeVisible();
   await expect(
     page.getByText("Suggestions are unavailable right now (daily AI limit). Your score and ATS check are complete.", {
       exact: true,
     }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
+  await openTab(page, "ATS check");
+  await expect(page.getByText("ATS score: 88/100")).toBeVisible();
 });
 
 test("renders the not-found page with navigation links", async ({ page }) => {

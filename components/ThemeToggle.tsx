@@ -50,7 +50,7 @@ export function ThemeToggle() {
             aria-pressed={pressed}
             onClick={() => choose(option)}
             className={`rounded-md px-3 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 ${
-              pressed ? "bg-stone-900 text-stone-50" : "text-stone-700 hover:bg-stone-100"
+              pressed ? "bg-indigo-600 text-white" : "text-stone-700 hover:bg-stone-100"
             }`}
           >
             {LABELS[option]}

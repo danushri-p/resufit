@@ -1,12 +1,15 @@
 interface LogoProps {
   size?: number;
   iconOnly?: boolean;
+  /** "onDark" keeps the wordmark light on the navy sidebar in both themes. */
+  tone?: "default" | "onDark";
   className?: string;
 }
 
 export function Logo({
   size = 32,
   iconOnly = false,
+  tone = "default",
   className,
 }: LogoProps) {
   return (
@@ -52,10 +55,20 @@ export function Logo({
       </svg>
       {!iconOnly && (
         <span
-          className="whitespace-nowrap font-semibold text-slate-900"
-          style={{ fontSize: size * 0.72, letterSpacing: "-0.04em" }}
+          className={`whitespace-nowrap font-bold ${tone === "onDark" ? "" : "text-slate-900"}`}
+          style={{
+            fontSize: size * 0.72,
+            letterSpacing: "-0.04em",
+            color: tone === "onDark" ? "#F8FAFC" : undefined,
+          }}
         >
-          Resu<span className="text-cyan-700">Fit</span>
+          Resu
+          <span
+            className={tone === "onDark" ? undefined : "text-cyan-700"}
+            style={{ color: tone === "onDark" ? "#22D3EE" : undefined }}
+          >
+            Fit
+          </span>
         </span>
       )}
     </span>

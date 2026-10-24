@@ -5,9 +5,5 @@ export function getProviderLabel(): string {
 export function ProviderFooter() {
   const providerLabel = getProviderLabel();
 
-  return (
-    <footer className="text-center text-xs text-stone-500">
-      AI: {providerLabel}
-    </footer>
-  );
+  return <p className="text-center text-xs text-stone-500">AI: {providerLabel}</p>;
 }

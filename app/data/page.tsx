@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, type ChangeEvent } from "react";
-import { Logo } from "@/components/Logo";
+import { PAGE_CLASS, PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
   backupFileName,
@@ -15,9 +14,7 @@ import {
 import { listHistoryEntries } from "@/lib/history";
 import { listApplications } from "@/lib/tracker";
 
-const NAV_LINK =
-  "rounded-md px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600";
-const SECTION = "space-y-4 rounded-xl bg-white p-5 ring-1 ring-foreground/10";
+const SECTION = "space-y-4 rounded-2xl bg-white p-5 ring-1 ring-stone-200";
 
 type PendingRestore = Extract<ParsedBackup, { success: true }> & { fileName: string };
 
@@ -118,189 +115,169 @@ export default function DataPage() {
   const hasData = Boolean(counts && (counts.history || counts.applications));
 
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-8 sm:px-6 sm:py-12">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <Link href="/" aria-label="ResuFit" className="mb-2 inline-flex">
-              <Logo />
-            </Link>
-            <h1 className="text-3xl font-semibold tracking-tight text-stone-900">Your data</h1>
-            <p className="mt-2 text-stone-600">
-              Everything ResuFit saves stays in this browser. Nothing is stored on our servers.
-            </p>
-          </div>
-          <nav aria-label="Main navigation" className="flex flex-wrap gap-2">
-            <Link href="/analyze" className={NAV_LINK}>
-              Analyze a resume
-            </Link>
-            <Link href="/history" className={NAV_LINK}>
-              History
-            </Link>
-            <Link href="/tracker" className={NAV_LINK}>
-              Tracker
-            </Link>
-          </nav>
-        </header>
+    <main className={PAGE_CLASS}>
+      <PageHeader
+        title="Your data"
+        description="Everything ResuFit saves stays in this browser. Nothing is stored on our servers."
+      />
 
-        {message && (
-          <p className="rounded-lg bg-green-100 px-4 py-3 text-sm font-medium text-green-950" role="status">
-            {message}
+      {message && (
+        <p className="rounded-lg bg-green-100 px-4 py-3 text-sm font-medium text-green-950" role="status">
+          {message}
+        </p>
+      )}
+
+      <section aria-labelledby="stored-heading" className={SECTION}>
+        <h2 id="stored-heading" className="text-lg font-medium text-stone-900">
+          Saved in this browser
+        </h2>
+        {counts ? (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            <li className="rounded-lg bg-stone-100 p-3">
+              <p className="text-sm text-stone-700">Analyses and comparisons</p>
+              <p className="text-2xl font-semibold text-stone-900">{counts.history}</p>
+            </li>
+            <li className="rounded-lg bg-stone-100 p-3">
+              <p className="text-sm text-stone-700">Tracked applications</p>
+              <p className="text-2xl font-semibold text-stone-900">{counts.applications}</p>
+            </li>
+          </ul>
+        ) : (
+          <p className="text-sm text-stone-600" role="status">
+            Loading your data…
           </p>
         )}
+        <p className="text-sm text-stone-700">
+          Clearing your browser&apos;s site data deletes all of this. Download a backup to keep
+          a copy or to move it to another browser or device.
+        </p>
+      </section>
 
-        <section aria-labelledby="stored-heading" className={SECTION}>
-          <h2 id="stored-heading" className="text-lg font-medium text-stone-900">
-            Saved in this browser
-          </h2>
-          {counts ? (
-            <ul className="grid gap-3 sm:grid-cols-2">
-              <li className="rounded-lg bg-stone-100 p-3">
-                <p className="text-sm text-stone-700">Analyses and comparisons</p>
-                <p className="text-2xl font-semibold text-stone-900">{counts.history}</p>
-              </li>
-              <li className="rounded-lg bg-stone-100 p-3">
-                <p className="text-sm text-stone-700">Tracked applications</p>
-                <p className="text-2xl font-semibold text-stone-900">{counts.applications}</p>
-              </li>
-            </ul>
-          ) : (
-            <p className="text-sm text-stone-600" role="status">
-              Loading your data…
-            </p>
-          )}
-          <p className="text-sm text-stone-700">
-            Clearing your browser&apos;s site data deletes all of this. Download a backup to keep
-            a copy or to move it to another browser or device.
+      <section aria-labelledby="backup-heading" className={SECTION}>
+        <h2 id="backup-heading" className="text-lg font-medium text-stone-900">
+          Back up
+        </h2>
+        <p className="text-sm text-stone-700">
+          Downloads a file with your analyses, cover letters, interview prep, tracked
+          applications, and learning progress. Keep it private: it can include details from your resume.
+        </p>
+        <Button type="button" onClick={downloadBackup} disabled={!hasData}>
+          Download backup
+        </Button>
+      </section>
+
+      <section aria-labelledby="restore-heading" className={SECTION}>
+        <h2 id="restore-heading" className="text-lg font-medium text-stone-900">
+          Restore
+        </h2>
+        <p className="text-sm text-stone-700">Choose a ResuFit backup file (.json).</p>
+        <div>
+          <label htmlFor="backup-file" className="sr-only">
+            Backup file
+          </label>
+          <input
+            id="backup-file"
+            type="file"
+            accept=".json,application/json"
+            onChange={(event) => void chooseFile(event)}
+            aria-describedby={restoreError ? "restore-error" : undefined}
+            className="block w-full min-w-0 text-sm text-stone-700 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-indigo-800 hover:file:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          />
+        </div>
+        {restoreError && (
+          <p id="restore-error" className="text-sm text-red-700" role="alert">
+            {restoreError}
           </p>
-        </section>
-
-        <section aria-labelledby="backup-heading" className={SECTION}>
-          <h2 id="backup-heading" className="text-lg font-medium text-stone-900">
-            Back up
-          </h2>
-          <p className="text-sm text-stone-700">
-            Downloads a file with your analyses, cover letters, interview prep, tracked
-            applications, and learning progress. Keep it private: it can include details from your resume.
-          </p>
-          <Button type="button" onClick={downloadBackup} disabled={!hasData}>
-            Download backup
-          </Button>
-        </section>
-
-        <section aria-labelledby="restore-heading" className={SECTION}>
-          <h2 id="restore-heading" className="text-lg font-medium text-stone-900">
-            Restore
-          </h2>
-          <p className="text-sm text-stone-700">Choose a ResuFit backup file (.json).</p>
-          <div>
-            <label htmlFor="backup-file" className="sr-only">
-              Backup file
-            </label>
-            <input
-              id="backup-file"
-              type="file"
-              accept=".json,application/json"
-              onChange={(event) => void chooseFile(event)}
-              aria-describedby={restoreError ? "restore-error" : undefined}
-              className="block w-full min-w-0 text-sm text-stone-700 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-indigo-800 hover:file:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
-            />
-          </div>
-          {restoreError && (
-            <p id="restore-error" className="text-sm text-red-700" role="alert">
-              {restoreError}
+        )}
+        {pending && (
+          <div className="space-y-4 rounded-lg bg-stone-100 p-4">
+            <p className="text-sm text-stone-800">
+              <span className="font-medium">{pending.fileName}</span> contains{" "}
+              {plural(pending.backup.history.length, "analysis", "analyses")} and{" "}
+              {plural(pending.backup.applications.length, "application", "applications")}.
+              {pending.invalidCount > 0 &&
+                ` ${plural(pending.invalidCount, "damaged item", "damaged items")} will be skipped.`}
             </p>
-          )}
-          {pending && (
-            <div className="space-y-4 rounded-lg bg-stone-100 p-4">
-              <p className="text-sm text-stone-800">
-                <span className="font-medium">{pending.fileName}</span> contains{" "}
-                {plural(pending.backup.history.length, "analysis", "analyses")} and{" "}
-                {plural(pending.backup.applications.length, "application", "applications")}.
-                {pending.invalidCount > 0 &&
-                  ` ${plural(pending.invalidCount, "damaged item", "damaged items")} will be skipped.`}
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-stone-900">How to restore</legend>
+              <label className="flex items-start gap-2 text-sm text-stone-800">
+                <input
+                  type="radio"
+                  name="restore-mode"
+                  value="merge"
+                  checked={mode === "merge"}
+                  onChange={() => setMode("merge")}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="font-medium">Merge</span> with what&apos;s already saved
+                  (items you already have are kept)
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm text-stone-800">
+                <input
+                  type="radio"
+                  name="restore-mode"
+                  value="replace"
+                  checked={mode === "replace"}
+                  onChange={() => setMode("replace")}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="font-medium">Replace</span> everything saved in this browser
+                  with the backup
+                </span>
+              </label>
+            </fieldset>
+            {mode === "replace" && hasData && (
+              <p className="text-sm font-medium text-red-800">
+                Your current analyses and applications will be deleted first.
               </p>
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium text-stone-900">How to restore</legend>
-                <label className="flex items-start gap-2 text-sm text-stone-800">
-                  <input
-                    type="radio"
-                    name="restore-mode"
-                    value="merge"
-                    checked={mode === "merge"}
-                    onChange={() => setMode("merge")}
-                    className="mt-1"
-                  />
-                  <span>
-                    <span className="font-medium">Merge</span> with what&apos;s already saved
-                    (items you already have are kept)
-                  </span>
-                </label>
-                <label className="flex items-start gap-2 text-sm text-stone-800">
-                  <input
-                    type="radio"
-                    name="restore-mode"
-                    value="replace"
-                    checked={mode === "replace"}
-                    onChange={() => setMode("replace")}
-                    className="mt-1"
-                  />
-                  <span>
-                    <span className="font-medium">Replace</span> everything saved in this browser
-                    with the backup
-                  </span>
-                </label>
-              </fieldset>
-              {mode === "replace" && hasData && (
-                <p className="text-sm font-medium text-red-800">
-                  Your current analyses and applications will be deleted first.
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={restore}>
-                  Restore backup
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setPending(undefined)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section aria-labelledby="delete-heading" className={SECTION}>
-          <h2 id="delete-heading" className="text-lg font-medium text-stone-900">
-            Delete all data
-          </h2>
-          <p className="text-sm text-stone-700">
-            Permanently deletes every saved analysis, comparison, cover letter, interview prep,
-            tracked application, and learning progress from this browser. This can&apos;t be undone.
-          </p>
-          {confirmDelete ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-stone-800">Delete everything?</span>
-              <Button type="button" variant="destructive" onClick={removeEverything}>
-                Delete everything
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={restore}>
+                Restore backup
               </Button>
-              <Button type="button" variant="outline" onClick={() => setConfirmDelete(false)}>
+              <Button type="button" variant="outline" onClick={() => setPending(undefined)}>
                 Cancel
               </Button>
             </div>
-          ) : (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                setConfirmDelete(true);
-                setMessage(undefined);
-              }}
-              disabled={!hasData}
-            >
-              Delete all data
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="delete-heading" className={SECTION}>
+        <h2 id="delete-heading" className="text-lg font-medium text-stone-900">
+          Delete all data
+        </h2>
+        <p className="text-sm text-stone-700">
+          Permanently deletes every saved analysis, comparison, cover letter, interview prep,
+          tracked application, and learning progress from this browser. This can&apos;t be undone.
+        </p>
+        {confirmDelete ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-stone-800">Delete everything?</span>
+            <Button type="button" variant="destructive" onClick={removeEverything}>
+              Delete everything
             </Button>
-          )}
-        </section>
-      </div>
+            <Button type="button" variant="outline" onClick={() => setConfirmDelete(false)}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => {
+              setConfirmDelete(true);
+              setMessage(undefined);
+            }}
+            disabled={!hasData}
+          >
+            Delete all data
+          </Button>
+        )}
+      </section>
     </main>
   );
 }

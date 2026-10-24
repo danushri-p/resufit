@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { CompareResult } from "@/lib/schemas";
+import { scoreTone } from "@/components/results/ScoreRing";
+import { CircleCheck, Trophy } from "lucide-react";
 
 interface ComparisonResultsProps {
   result: CompareResult;
@@ -34,7 +36,24 @@ export function ComparisonResults({
 
   return (
     <div className="grid min-w-0 gap-6" aria-label="Comparison results">
-      <section aria-label="Ranked job matches" className="grid min-w-0 gap-4">
+      {rankedJobs.length > 1 && (
+        <div className="flex items-center gap-4 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+          <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800">
+            <Trophy aria-hidden="true" className="size-5" />
+          </span>
+          <p className="text-sm text-stone-700">
+            <span className="block font-semibold text-amber-900">
+              Strongest match:{" "}
+              {labels?.[rankedJobs[0].index]?.trim() ||
+                rankedJobs[0].job!.jobTitle?.trim() ||
+                `Job ${rankedJobs[0].index + 1}`}
+              {rankedJobs[0].job!.company ? ` at ${rankedJobs[0].job!.company}` : ""}
+            </span>
+            With a {rankedJobs[0].match!.score}% match, this role aligns best with your current resume.
+          </p>
+        </div>
+      )}
+      <section aria-label="Ranked job matches" className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {rankedJobs.map((entry, rank) => {
           const job = entry.job!;
           const match = entry.match!;
@@ -65,10 +84,12 @@ export function ComparisonResults({
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex flex-wrap items-baseline gap-3">
-                  <p className="text-4xl font-semibold tracking-tight text-stone-900">
-                    {match.score}
-                    <span className="text-xl text-stone-500">/100</span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p
+                    className={`rounded-full px-3 py-1 text-2xl font-bold ${scoreTone(match.score).bg} ${scoreTone(match.score).text}`}
+                  >
+                    {match.score}%
+                    <span className="sr-only"> ({match.score}/100)</span>
                   </p>
                   <p className="font-medium text-indigo-800">{match.label}</p>
                 </div>
@@ -78,20 +99,23 @@ export function ComparisonResults({
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={match.score}
-                  className="h-3 overflow-hidden rounded-full bg-stone-200"
+                  className="h-2 overflow-hidden rounded-full bg-stone-200"
                 >
                   <div
-                    className="h-full rounded-full bg-indigo-700"
+                    className={`h-full rounded-full ${scoreTone(match.score).bar}`}
                     style={{ width: `${match.score}%` }}
                   />
                 </div>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-stone-700">
-                  <p>
-                    Must-have coverage: {match.matchedMustHave.length}/
-                    {totalMustHave}
-                  </p>
-                  <p>ATS keyword coverage: {entry.atsKeywordCoverage ?? 0}%</p>
-                </div>
+                <ul className="space-y-1.5 text-sm text-stone-700">
+                  <li className="flex items-center gap-2">
+                    <CircleCheck aria-hidden="true" className="size-4 shrink-0 text-green-600" />
+                    Must-have coverage: {match.matchedMustHave.length}/{totalMustHave}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CircleCheck aria-hidden="true" className="size-4 shrink-0 text-indigo-600" />
+                    ATS keyword coverage: {entry.atsKeywordCoverage ?? 0}%
+                  </li>
+                </ul>
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-stone-900">
                     Top missing must-haves

@@ -37,8 +37,8 @@ It is an installable web app that works offline for browser-stored features, sup
 
 ## Quality
 
-- **173 unit tests** (Vitest) and **59 end-to-end tests** (Playwright), including accessibility scans in light and dark mode, offline/service-worker tests, and mobile-width checks.
-- CI runs lint, unit tests, a production build, and the full browser suite on every pull request (GitHub Actions, Node.js 24); every feature shipped through a reviewed pull request over 18 days.
+- **174 unit tests** (Vitest) and **63 end-to-end tests** (Playwright), including accessibility scans in light and dark mode, offline/service-worker tests, and mobile-width checks.
+- CI runs lint, unit tests, a production build, and the full browser suite on every pull request (GitHub Actions, Node.js 24); every feature shipped through a reviewed pull request over 19 days.
 - No production vulnerabilities in `npm audit --omit=dev`.
 
 ## Tech stack
