@@ -19,7 +19,7 @@ test("serves an installable web app manifest with icons", async ({ page, request
   expect(manifest).toMatchObject({
     name: "ResuFit – AI resume analyzer",
     short_name: "ResuFit",
-    start_url: "/",
+    start_url: "/home",
     display: "standalone",
     theme_color: "#0B1020",
   });

@@ -52,8 +52,16 @@ test("captures the README screenshots", async ({ page }) => {
   await fs.mkdir(directory, { recursive: true });
 
   await page.goto("/");
-  await page.getByRole("heading", { name: /Your next opportunity/ }).waitFor();
+  await page.getByRole("heading", { level: 1, name: "ResuFit" }).waitFor();
   await capture(page, "landing");
+
+  await page.goto("/login");
+  await page.getByRole("heading", { name: "Welcome back" }).waitFor();
+  await capture(page, "login");
+
+  await page.goto("/home");
+  await page.getByRole("heading", { name: /Your next opportunity/ }).waitFor();
+  await capture(page, "home");
 
   await page.goto("/analyze?sample=1");
   await page.getByText("Sample data: fictional resume and job description.").waitFor();
@@ -124,6 +132,6 @@ test("captures the README screenshots", async ({ page }) => {
 
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/");
-  await page.getByRole("heading", { name: /Your next opportunity/ }).waitFor();
+  await page.getByRole("heading", { level: 1, name: "ResuFit" }).waitFor();
   await capture(page, "dark");
 });

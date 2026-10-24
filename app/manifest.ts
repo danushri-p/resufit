@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "ResuFit",
     description:
       "Compare your resume with a job, get an honest match score, and track your applications.",
-    start_url: "/",
+    start_url: "/home",
     scope: "/",
     display: "standalone",
     background_color: "#FAFAF9",
