@@ -20,6 +20,25 @@ test("landing page has no serious or critical accessibility violations", async (
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+for (const [path, name] of [
+  ["/home", "home page"],
+  ["/login", "login page"],
+  ["/signup", "signup page"],
+  ["/forgot-password", "forgot password page"],
+] as const) {
+  test(`${name} has no serious or critical accessibility violations`, async ({ page }) => {
+    await page.goto(path);
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+}
+
+test("login errors have no serious or critical accessibility violations", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page.getByText("Enter your email.")).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("empty analyze page has no serious or critical accessibility violations", async ({ page }) => {
   await page.goto("/analyze");
   await expectNoSeriousAccessibilityViolations(page);

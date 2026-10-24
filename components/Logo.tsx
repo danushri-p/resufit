@@ -14,6 +14,7 @@ export function Logo({
 }: LogoProps) {
   return (
     <span
+      role="img"
       aria-label="ResuFit"
       className={`inline-flex max-w-full items-center gap-2 ${className ?? ""}`}
     >

@@ -1,11 +1,12 @@
 // ResuFit service worker: offline support for pages whose data lives in the browser.
 // AI requests (/api/*) are never cached or intercepted.
-const CACHE_VERSION = "resufit-v4";
+const CACHE_VERSION = "resufit-v5";
 const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 const ASSETS_CACHE = `${CACHE_VERSION}-assets`;
 const OFFLINE_URL = "/offline";
 // Pages that are useful offline because their data is stored in this browser.
-const PRECACHE_PAGES = ["/", "/tracker", "/history", "/data", "/learn", OFFLINE_URL];
+// Pages behind login are skipped here when signed out and cached on the first visit instead.
+const PRECACHE_PAGES = ["/", "/home", "/tracker", "/history", "/data", "/learn", OFFLINE_URL];
 const PRECACHE_ASSETS = [
   "/logo.svg",
   "/icons/icon-192.png",
@@ -30,7 +31,8 @@ async function precache() {
   for (const path of PRECACHE_PAGES) {
     try {
       const response = await fetch(path, { cache: "no-store" });
-      if (!response.ok) continue;
+      // A redirect means the page needs a login; never cache the login page under its URL.
+      if (!response.ok || response.redirected) continue;
       await pages.put(path, response.clone());
       // Also cache the scripts and styles each page needs, so it works offline.
       const html = await response.text();
@@ -77,7 +79,7 @@ async function handleNavigation(request) {
   const url = new URL(request.url);
   try {
     const response = await fetch(request);
-    if (response.ok && response.type === "basic") {
+    if (response.ok && response.type === "basic" && !response.redirected) {
       const pages = await caches.open(PAGES_CACHE);
       await pages.put(url.pathname, response.clone());
     }

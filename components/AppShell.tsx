@@ -10,6 +10,7 @@ import {
   GraduationCap,
   History,
   House,
+  LogOut,
   Mail,
   Menu,
   MessagesSquare,
@@ -20,6 +21,8 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { InstallAppButton } from "@/components/pwa/InstallAppButton";
+import { STANDALONE_PATHS } from "@/lib/auth/routes";
+import { signOut, useUser } from "@/lib/auth/useUser";
 
 interface NavItem {
   href: string;
@@ -30,7 +33,7 @@ interface NavItem {
 }
 
 const MAIN_ITEMS: NavItem[] = [
-  { href: "/", label: "Home", icon: House },
+  { href: "/home", label: "Home", icon: House },
   { href: "/analyze", label: "Analyze", icon: ScanSearch },
   { href: "/history", label: "History", icon: History },
   { href: "/compare", label: "Compare jobs", icon: Columns3 },
@@ -88,6 +91,38 @@ function NavLinksWithView({ onNavigate }: { onNavigate?: () => void }) {
   return <NavLinks view={view} onNavigate={onNavigate} />;
 }
 
+function UserMenu() {
+  const { user } = useUser();
+  if (!user) return null;
+  const initials = user.name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+  return (
+    <div className="mt-2 flex items-center gap-3 rounded-lg bg-sidebar-accent px-3 py-2.5">
+      <span
+        aria-hidden="true"
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground"
+      >
+        {initials}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">{user.name}</p>
+        <p className="truncate text-xs text-sidebar-foreground">{user.email}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      >
+        <LogOut aria-hidden="true" className="size-4.5" />
+        <span className="sr-only">Log out</span>
+      </button>
+    </div>
+  );
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
@@ -114,6 +149,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <InstallAppButton
           className={`${ITEM_CLASS} text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground`}
         />
+        <UserMenu />
       </div>
     </>
   );
@@ -121,6 +157,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // The landing and account pages have their own full-width layout.
+  if (STANDALONE_PATHS.includes(pathname)) {
+    return (
+      <div id="content" className="flex min-h-screen min-w-0 flex-col">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -133,7 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col gap-6 overflow-y-auto bg-sidebar px-4 py-6 lg:flex print:hidden">
         <Link
-          href="/"
+          href="/home"
           aria-label="ResuFit home"
           className="inline-flex rounded-lg px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
@@ -145,7 +191,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="sticky top-0 z-30 bg-sidebar lg:hidden print:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <Link
-            href="/"
+            href="/home"
             aria-label="ResuFit home"
             className="inline-flex min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
           >

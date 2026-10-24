@@ -7,8 +7,10 @@ test("landing, results, history, tracker, and data pages fit a 375px viewport wi
   await page.setViewportSize({ width: 375, height: 812 });
   await mockAI(page);
 
-  await page.goto("/");
-  await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  for (const path of ["/", "/login", "/signup", "/home"]) {
+    await page.goto(path);
+    await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
+  }
 
   await page.goto("/compare");
   await expect.poll(() => horizontalOverflow(page)).toBeLessThanOrEqual(0);
